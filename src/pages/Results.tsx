@@ -567,34 +567,34 @@ const Results = () => {
 										className='bg-green-500 text-white font-bold py-3 px-8 rounded-lg text-lg w-fit hover:bg-green-600 transition-colors'
 										onClick={handleSwapPlayers}
 									>
-										🔄 Поменять местами
+										Поменять местами
 									</button>
 								)}
 
-								{selectedPlayers.length > 0 && (
-									<div className='text-sm text-gray-600 text-center mb-2'>
-										Выбрано игроков: {selectedPlayers.length}/2
-										{selectedPlayers.length < 2 && (
-											<div className='text-xs mt-1'>
-												Выберите еще {2 - selectedPlayers.length} игрока для
-												замены
-											</div>
-										)}
-									</div>
-								)}
+								<div className='text-sm text-center mb-2'>
+									{selectedPlayers.length === 0 && (
+										<div className='text-xs mt-1'>
+											{selectedPlayers.length === 0
+												? 'Выбери кого ты хочешь заменить'
+												: selectedPlayers.length === 1
+												? 'На кого меняем?'
+												: ''}
+										</div>
+									)}
+								</div>
 
 								<button
 									className='bg-[#FFEC13] text-black font-bold py-3 px-8 rounded-lg text-lg w-fit hover:bg-yellow-300 transition-colors'
 									onClick={handleSavePositions}
 								>
-									💾 Сохранить
+									Сохранить
 								</button>
 
 								<button
 									className='bg-gray-500 text-white font-bold py-2 px-6 rounded-lg text-base w-fit hover:bg-gray-600 transition-colors'
 									onClick={handleExitEditMode}
 								>
-									❌ Отменить
+									Отменить
 								</button>
 							</>
 						) : (
@@ -637,10 +637,10 @@ const Results = () => {
 								{isAdmin && (
 									<>
 										<button
-											className='bg-purple-500 text-white font-bold py-3 px-8 rounded-lg text-lg w-fit hover:bg-purple-600 transition-colors'
+											className='bg-[#EC3381] text-white font-bold py-3 px-8 rounded-lg text-lg w-fit transition-colors'
 											onClick={handleEnterEditMode}
 										>
-											🔀 Поменять позиции
+											Поменять позиции
 										</button>
 										<Link
 											to='/select-team'
