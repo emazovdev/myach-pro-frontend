@@ -213,7 +213,7 @@ const Results = () => {
 				} else {
 					setShareStatus('🚫 Отправка временно недоступна')
 				}
-				setTimeout(() => setShareStatus(''), 4000)
+				setTimeout(() => setShareStatus(''), 3000)
 				return
 			}
 
@@ -255,12 +255,6 @@ const Results = () => {
 					// Показываем сообщение об успешной отправке
 					setShareStatus('✅ Изображение поделено!')
 
-					// Убираем автоматическое закрытие бота
-					// if (tg && tg.close) {
-					// 	setTimeout(() => {
-					// 		tg.close()
-					// 	}, 500)
-					// }
 				} else {
 					setShareStatus(`❌ ${result.error || 'Не удалось поделиться'}`)
 				}
@@ -297,14 +291,6 @@ const Results = () => {
 
 					// Показываем сообщение об успешной отправке
 					setShareStatus('✅ Изображение отправлено в чат!')
-
-					// Убираем автоматическое закрытие бота
-					// if (tg && tg.close) {
-					// 	// Небольшая задержка для показа сообщения пользователю
-					// 	setTimeout(() => {
-					// 		tg.close()
-					// 	}, 500)
-					// }
 				} else {
 					setShareStatus(`❌ ${result.message || 'Не удалось отправить в чат'}`)
 				}
@@ -356,7 +342,7 @@ const Results = () => {
 			setIsSharing(false)
 
 			// Очищаем статус через 3 секунды
-			setTimeout(() => setShareStatus(''), 3000)
+			setTimeout(() => setShareStatus(''), 2000)
 		}
 	}
 
@@ -639,18 +625,16 @@ const Results = () => {
 									Поменять позиции
 								</button>
 
-								{isAdmin && (
-									<Link
-										to='/select-team'
-										className={`inline-block bg-[#FFEC13] text-black font-bold py-3 px-8 rounded-lg text-lg w-fit ${
-											isSharing
-												? 'opacity-50 cursor-not-allowed pointer-events-none'
-												: ''
-										}`}
-									>
-										Собрать новый тир-лист
-									</Link>
-								)}
+								<Link
+									to='/select-team'
+									className={`inline-block bg-[#FFEC13] text-black font-bold py-3 px-8 rounded-lg text-lg w-fit ${
+										isSharing
+											? 'opacity-50 cursor-not-allowed pointer-events-none'
+											: ''
+									}`}
+								>
+									Собрать новый тир-лист
+								</Link>
 
 								{/* Статус шэринга */}
 								{shareStatus && (
