@@ -54,7 +54,7 @@ const Results = () => {
 	const [userShareStats, setUserShareStats] = useState<UserShareStats | null>(
 		null,
 	);
-	const [isLoadingStats, setIsLoadingStats] = useState(false);
+	// const [isLoadingStats, setIsLoadingStats] = useState(false);
 
 	// Проверяем, есть ли данные игры
 	const hasGameData =
@@ -121,7 +121,7 @@ const Results = () => {
 		const loadUserStats = async () => {
 			if (!initData || !isAdmin) return;
 
-			setIsLoadingStats(true);
+			// setIsLoadingStats(true);
 			try {
 				const stats = await getUserShareStats(initData);
 				setUserShareStats(stats);
@@ -139,7 +139,7 @@ const Results = () => {
 					canUse: true,
 				});
 			} finally {
-				setIsLoadingStats(false);
+				// setIsLoadingStats(false);
 			}
 		};
 
@@ -516,7 +516,7 @@ const Results = () => {
 					)}
 
 					{/* Информация о лимитах пользователя */}
-					{isAdmin && userShareStats && !isLoadingStats && (
+					{/* {isAdmin && userShareStats && !isLoadingStats && (
 						<div className='mb-4 p-3 bg-gray-50 rounded-lg border'>
 							<div className='text-sm text-gray-600 text-center'>
 								<div className='flex justify-between items-center mb-1'>
@@ -552,7 +552,7 @@ const Results = () => {
 								)}
 							</div>
 						</div>
-					)}
+					)} */}
 
 					{/* Кнопка поделиться и статус */}
 
@@ -589,7 +589,10 @@ const Results = () => {
 								: platform === 'ios'
 								? 'Поделиться'
 								: 'Отправить в чат'}
-						</button>
+						</button> 
+						<Link to='/select-team' className='font-bold py-3 px-8 rounded-lg text-lg w-fit disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 bg-gray-400 text-gray-700'>
+							Собрать новый тир-лист
+						</Link>
 
 						{/* Статус шэринга */}
 						{shareStatus && (
