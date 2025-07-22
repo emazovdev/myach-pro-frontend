@@ -40,7 +40,7 @@ const getDisplayClubName = (clubName: string): string => {
 }
 
 const Results = () => {
-	const { initData, tg } = useTelegram()
+	const { initData } = useTelegram()
 	const { isAdmin } = useUserStore()
 	const {
 		categorizedPlayers,
@@ -255,12 +255,12 @@ const Results = () => {
 					// Показываем сообщение об успешной отправке
 					setShareStatus('✅ Изображение поделено!')
 
-					// Закрываем мини-приложение для всех платформ после успешного шэринга
-					if (tg && tg.close) {
-						setTimeout(() => {
-							tg.close()
-						}, 500)
-					}
+					// Убираем автоматическое закрытие бота
+					// if (tg && tg.close) {
+					// 	setTimeout(() => {
+					// 		tg.close()
+					// 	}, 500)
+					// }
 				} else {
 					setShareStatus(`❌ ${result.error || 'Не удалось поделиться'}`)
 				}
@@ -298,13 +298,13 @@ const Results = () => {
 					// Показываем сообщение об успешной отправке
 					setShareStatus('✅ Изображение отправлено в чат!')
 
-					// Закрываем мини-приложение для всех платформ после успешной отправки
-					if (tg && tg.close) {
-						// Небольшая задержка для показа сообщения пользователю
-						setTimeout(() => {
-							tg.close()
-						}, 500)
-					}
+					// Убираем автоматическое закрытие бота
+					// if (tg && tg.close) {
+					// 	// Небольшая задержка для показа сообщения пользователю
+					// 	setTimeout(() => {
+					// 		tg.close()
+					// 	}, 500)
+					// }
 				} else {
 					setShareStatus(`❌ ${result.message || 'Не удалось отправить в чат'}`)
 				}
@@ -635,14 +635,19 @@ const Results = () => {
 								{isAdmin && (
 									<>
 										<button
-											className='bg-[#EC3381] text-white font-bold py-3 px-8 rounded-lg text-lg w-fit transition-colors'
+											className='bg-[#EC3381] text-white font-bold py-3 px-8 rounded-lg text-lg w-fit transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
 											onClick={handleEnterEditMode}
+											disabled={isSharing}
 										>
 											Поменять позиции
 										</button>
 										<Link
 											to='/select-team'
-											className='inline-block bg-[#FFEC13] text-black font-bold py-3 px-8 rounded-lg text-lg w-fit'
+											className={`inline-block bg-[#FFEC13] text-black font-bold py-3 px-8 rounded-lg text-lg w-fit ${
+												isSharing
+													? 'opacity-50 cursor-not-allowed pointer-events-none'
+													: ''
+											}`}
 										>
 											Собрать новый тир-лист
 										</Link>
@@ -669,7 +674,11 @@ const Results = () => {
 								{isAdmin && (
 									<Link
 										to='/admin'
-										className='inline-block bg-[#FFEC13] text-black font-bold py-3 px-8 rounded-lg text-lg w-fit'
+										className={`inline-block bg-[#FFEC13] text-black font-bold py-3 px-8 rounded-lg text-lg w-fit ${
+											isSharing
+												? 'opacity-50 cursor-not-allowed pointer-events-none'
+												: ''
+										}`}
 									>
 										Админ
 									</Link>
