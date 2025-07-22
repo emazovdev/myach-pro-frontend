@@ -590,7 +590,7 @@ const Results = () => {
 								? 'Поделиться'
 								: 'Отправить в чат'}
 						</button> 
-						<Link to='/select-team' className='font-bold py-3 px-8 rounded-lg text-lg w-fit disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 bg-gray-400 text-gray-700'>
+						<Link to='/select-team' className='inline-block bg-[#FFEC13] text-black font-bold py-3 px-8 rounded-lg text-lg w-fit'>
 							Собрать новый тир-лист
 						</Link>
 
