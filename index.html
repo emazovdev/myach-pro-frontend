@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="ru">
+
+<head>
+	<meta charset="UTF-8" />
+	<link rel="icon" href="/logo.ico" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<link rel="stylesheet" href="/fonts/fonts.css" />
+	<title>Мяч Production</title>
+
+	<!-- DNS prefetch для API -->
+	<link rel="dns-prefetch" href="//server.myach-specialprojects.ru">
+
+	<!-- Preload критически важных ресурсов -->
+	<link rel="preload" href="/fonts/Montserrat-Regular.ttf" as="font" type="font/ttf" crossorigin>
+	<link rel="preload" href="/fonts/Montserrat-Bold.ttf" as="font" type="font/ttf" crossorigin>
+
+	<!-- Оптимизация загрузки -->
+	<meta name="theme-color" content="#000000">
+	<meta name="mobile-web-app-capable" content="yes">
+	<meta name="apple-mobile-web-app-capable" content="yes">
+	<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+	<!-- telegram api -->
+	<script src="https://telegram.org/js/telegram-web-app.js?57"></script>
+</head>
+
+<body>
+	<div id="root"></div>
+	<script type="module" src="/src/main.tsx"></script>
+</body>
+
+</html>
