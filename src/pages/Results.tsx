@@ -1,132 +1,143 @@
-import { useState, useEffect } from 'react';
-import { useGameStore, useUserStore } from '../store';
-import { CategoryItem, LoadingSpinner, ShareTestPanel } from '../components';
-import { fetchClubs } from '../api';
+import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
+import { fetchClubs } from '../api'
+import { completeGameSession } from '../api/analyticsService'
 import {
 	downloadResultsImage,
-	shareResults,
 	getUserShareStats,
+	shareResults,
+	type RateLimitError,
 	type ShareData,
 	type UserShareStats,
-	type RateLimitError,
-} from '../api/shareService';
-import { useTelegram } from '../hooks/useTelegram';
-import { getProxyImageUrl } from '../utils/imageUtils';
-import { completeGameSession } from '../api/analyticsService';
-import { TELEGRAM_BOT_USERNAME } from '../config/api';
-import { Link } from 'react-router-dom';
+} from '../api/shareService'
+import { CategoryItem, LoadingSpinner, ShareTestPanel } from '../components'
+import { TELEGRAM_BOT_USERNAME } from '../config/api'
+import { useTelegram } from '../hooks/useTelegram'
+import { useGameStore, useUserStore } from '../store'
+import { getProxyImageUrl } from '../utils/imageUtils'
+import { securityUtils } from '../utils/securityUtils'
 import {
-	universalShare,
 	detectPlatform,
 	getAvailableShareMethods,
+	universalShare,
 	type ShareOptions,
-} from '../utils/shareUtils';
-import { securityUtils } from '../utils/securityUtils';
+} from '../utils/shareUtils'
 
 // Функция для обработки названия клуба
 const getDisplayClubName = (clubName: string): string => {
 	// Проверяем, содержит ли название "клуб" (регистронезависимо)
-	const hasClub = clubName.toLowerCase().includes('клуб');
+	const hasClub = clubName.toLowerCase().includes('клуб')
 
 	// Ищем сезон в формате YYYY/YY
-	const seasonMatch = clubName.match(/(\d{4}\/\d{2})/);
+	const seasonMatch = clubName.match(/(\d{4}\/\d{2})/)
 
 	if (hasClub && seasonMatch) {
-		const season = seasonMatch[1];
-		return `Твой тир-лист клубов ${season}`;
+		const season = seasonMatch[1]
+		return `Твой тир-лист клубов ${season}`
 	}
 
-	return clubName;
-};
+	return clubName
+}
 
 const Results = () => {
-	const { initData, tg } = useTelegram();
-	const { isAdmin } = useUserStore();
-	const { categorizedPlayers, categories } = useGameStore();
-	const [club, setClub] = useState<any>(null);
-	const [isLoading, setIsLoading] = useState(true);
-	const [error, setError] = useState<string | null>(null);
-	const [isSharing, setIsSharing] = useState(false);
-	const [shareStatus, setShareStatus] = useState<string>('');
-	const [hasSharedInSession, setHasSharedInSession] = useState(false); // Флаг отправки в сессии
-	const [platform] = useState(() => detectPlatform());
-	const [availableMethods] = useState(() => getAvailableShareMethods());
+	const { initData, tg } = useTelegram()
+	const { isAdmin } = useUserStore()
+	const {
+		categorizedPlayers,
+		categories,
+		isEditingPositions,
+		selectedPlayers,
+		tempCategorizedPlayers,
+		enterEditMode,
+		exitEditMode,
+		selectPlayerForSwap,
+		swapSelectedPlayers,
+		savePositionChanges,
+	} = useGameStore()
+	const [club, setClub] = useState<any>(null)
+	const [isLoading, setIsLoading] = useState(true)
+	const [error, setError] = useState<string | null>(null)
+	const [isSharing, setIsSharing] = useState(false)
+	const [shareStatus, setShareStatus] = useState<string>('')
+	const [hasSharedInSession, setHasSharedInSession] = useState(false) // Флаг отправки в сессии
+	const [platform] = useState(() => detectPlatform())
+	const [availableMethods] = useState(() => getAvailableShareMethods())
 	const [userShareStats, setUserShareStats] = useState<UserShareStats | null>(
-		null,
-	);
+		null
+	)
 	// const [isLoadingStats, setIsLoadingStats] = useState(false);
 
 	// Проверяем, есть ли данные игры
 	const hasGameData =
 		categories.length > 0 &&
 		Object.keys(categorizedPlayers).length > 0 &&
-		Object.values(categorizedPlayers).some((players) => players.length > 0);
+		Object.values(categorizedPlayers).some(players => players.length > 0)
 
 	// Функция для форматирования времени до следующего доступного запроса
 	const formatTimeUntilAvailable = (nextAvailable: string | null): string => {
-		if (!nextAvailable) return '';
+		if (!nextAvailable) return ''
 
-		const now = new Date();
-		const availableTime = new Date(nextAvailable);
-		const diffMs = availableTime.getTime() - now.getTime();
+		const now = new Date()
+		const availableTime = new Date(nextAvailable)
+		const diffMs = availableTime.getTime() - now.getTime()
 
-		if (diffMs <= 0) return 'Доступно сейчас';
+		if (diffMs <= 0) return 'Доступно сейчас'
 
-		const minutes = Math.ceil(diffMs / 60000);
-		return `через ${minutes} мин`;
-	};
+		const minutes = Math.ceil(diffMs / 60000)
+		return `через ${minutes} мин`
+	}
 
 	// Проверяем, доступна ли кнопка поделиться
 	const isShareAvailable = () => {
-		if (!userShareStats) return true; // По умолчанию доступна, пока не загрузилась статистика
+		if (!userShareStats) return true // По умолчанию доступна, пока не загрузилась статистика
 
-		return userShareStats.canUse && userShareStats.dailyRemaining > 0;
-	};
+		return userShareStats.canUse && userShareStats.dailyRemaining > 0
+	}
 
 	useEffect(() => {
 		const loadClub = async () => {
 			if (!initData) {
-				setError('Данные Telegram не найдены');
-				setIsLoading(false);
-				return;
+				setError('Данные Telegram не найдены')
+				setIsLoading(false)
+				return
 			}
 
 			try {
-				const clubs = await fetchClubs(initData);
+				const clubs = await fetchClubs(initData)
 				if (clubs && clubs.length > 0) {
-					setClub(clubs[0]);
+					setClub(clubs[0])
 				} else {
-					setError('Не удалось загрузить информацию о клубе');
+					setError('Не удалось загрузить информацию о клубе')
 				}
 
 				// Логируем завершение игры при заходе на страницу результатов
 				if (hasGameData) {
-					completeGameSession(initData).catch((error) => {
-						console.error('Ошибка при логировании завершения игры:', error);
-					});
+					completeGameSession(initData).catch(error => {
+						console.error('Ошибка при логировании завершения игры:', error)
+					})
 				}
 			} catch (err) {
-				console.error('Ошибка при загрузке данных о клубе:', err);
-				setError('Ошибка при загрузке данных о клубе');
+				console.error('Ошибка при загрузке данных о клубе:', err)
+				setError('Ошибка при загрузке данных о клубе')
 			} finally {
-				setIsLoading(false);
+				setIsLoading(false)
 			}
-		};
+		}
 
-		loadClub();
-	}, [initData, hasGameData]);
+		loadClub()
+	}, [initData, hasGameData])
 
 	// Загружаем статистику лимитов пользователя
 	useEffect(() => {
 		const loadUserStats = async () => {
-			if (!initData || !isAdmin) return;
+			if (!initData || !isAdmin) return
 
 			// setIsLoadingStats(true);
 			try {
-				const stats = await getUserShareStats(initData);
-				setUserShareStats(stats);
+				const stats = await getUserShareStats(initData)
+				setUserShareStats(stats)
 			} catch (error) {
-				console.error('Ошибка при загрузке статистики лимитов:', error);
+				console.error('Ошибка при загрузке статистики лимитов:', error)
 				// В случае ошибки устанавливаем дефолтные значения
 				setUserShareStats({
 					dailyUsed: 0,
@@ -137,138 +148,138 @@ const Results = () => {
 					nextAvailableAt: null,
 					intervalMinutes: 10,
 					canUse: true,
-				});
+				})
 			} finally {
 				// setIsLoadingStats(false);
 			}
-		};
+		}
 
-		loadUserStats();
-	}, [initData, isAdmin]);
+		loadUserStats()
+	}, [initData, isAdmin])
 
 	// Периодически обновляем состояние доступности кнопки
 	useEffect(() => {
-		if (!userShareStats?.nextAvailableAt) return;
+		if (!userShareStats?.nextAvailableAt) return
 
 		const interval = setInterval(() => {
-			const now = new Date();
-			const availableTime = new Date(userShareStats.nextAvailableAt!);
+			const now = new Date()
+			const availableTime = new Date(userShareStats.nextAvailableAt!)
 
 			if (now >= availableTime) {
 				// Время истекло, можно обновить статистику
 				if (initData && isAdmin) {
 					getUserShareStats(initData)
-						.then((stats) => {
-							setUserShareStats(stats);
+						.then(stats => {
+							setUserShareStats(stats)
 						})
-						.catch(console.error);
+						.catch(console.error)
 				}
 			}
-		}, 30000); // Проверяем каждые 30 секунд
+		}, 30000) // Проверяем каждые 30 секунд
 
-		return () => clearInterval(interval);
-	}, [userShareStats?.nextAvailableAt, initData, isAdmin]);
+		return () => clearInterval(interval)
+	}, [userShareStats?.nextAvailableAt, initData, isAdmin])
 
 	// Универсальная функция для обработки клика по кнопке "Поделиться"
 	const handleShare = async () => {
 		try {
 			// Проверяем origin для защиты от CSRF
 			if (!securityUtils.checkOrigin(window.location.origin)) {
-				throw new Error('Недопустимый источник запроса');
+				throw new Error('Недопустимый источник запроса')
 			}
 
 			// Проверяем, не была ли уже отправлена картинка в этой сессии
 			if (hasSharedInSession) {
-				setShareStatus('🚫 Изображение уже было отправлено в этой сессии');
-				setTimeout(() => setShareStatus(''), 3000);
-				return;
+				setShareStatus('🚫 Изображение уже было отправлено в этой сессии')
+				setTimeout(() => setShareStatus(''), 3000)
+				return
 			}
 
 			if (!initData || !club || !hasGameData) {
-				setShareStatus('Недостаточно данных для создания изображения');
-				setTimeout(() => setShareStatus(''), 3000);
-				return;
+				setShareStatus('Недостаточно данных для создания изображения')
+				setTimeout(() => setShareStatus(''), 3000)
+				return
 			}
 
 			// Проверяем лимиты пользователя
 			if (userShareStats && !isShareAvailable()) {
 				if (userShareStats.dailyRemaining <= 0) {
-					setShareStatus('🚫 Превышен дневной лимит (5 изображений в день)');
+					setShareStatus('🚫 Превышен дневной лимит (5 изображений в день)')
 				} else if (!userShareStats.canUse && userShareStats.nextAvailableAt) {
 					const timeUntil = formatTimeUntilAvailable(
-						userShareStats.nextAvailableAt,
-					);
-					setShareStatus(`⏳ Следующая отправка доступна ${timeUntil}`);
+						userShareStats.nextAvailableAt
+					)
+					setShareStatus(`⏳ Следующая отправка доступна ${timeUntil}`)
 				} else {
-					setShareStatus('🚫 Отправка временно недоступна');
+					setShareStatus('🚫 Отправка временно недоступна')
 				}
-				setTimeout(() => setShareStatus(''), 4000);
-				return;
+				setTimeout(() => setShareStatus(''), 4000)
+				return
 			}
 
-			setIsSharing(true);
+			setIsSharing(true)
 
 			// Преобразуем categorizedPlayers в categorizedPlayerIds (только IDs)
-			const categorizedPlayerIds: { [categoryName: string]: string[] } = {};
+			const categorizedPlayerIds: { [categoryName: string]: string[] } = {}
 
 			Object.entries(categorizedPlayers).forEach(([categoryName, players]) => {
-				categorizedPlayerIds[categoryName] = players.map((player) => player.id);
-			});
+				categorizedPlayerIds[categoryName] = players.map(player => player.id)
+			})
 
 			const shareData: ShareData = {
 				categorizedPlayerIds,
 				categories,
 				clubId: club.id,
-			};
+			}
 
 			// Проверяем платформу для выбора метода шэринга
 			if (platform === 'ios') {
 				// Для iOS оставляем поведение с webview
 				// Получаем изображение в высоком качестве
-				const { blob } = await downloadResultsImage(initData, shareData);
+				const { blob } = await downloadResultsImage(initData, shareData)
 
 				// Подготавливаем данные для универсального шэринга
 				const shareOptions: ShareOptions = {
 					imageBlob: blob,
 					text: `Собери свой тир лист - @${TELEGRAM_BOT_USERNAME}`,
 					clubName: club.name,
-				};
+				}
 
 				// Используем универсальную функцию шэринга для iOS
-				const result = await universalShare(shareOptions);
+				const result = await universalShare(shareOptions)
 
 				if (result.success) {
 					// Устанавливаем флаг успешной отправки в сессии
-					setHasSharedInSession(true);
+					setHasSharedInSession(true)
 
 					// Показываем сообщение об успешной отправке
-					setShareStatus('✅ Изображение поделено!');
+					setShareStatus('✅ Изображение поделено!')
 
 					// Закрываем мини-приложение для всех платформ после успешного шэринга
 					if (tg && tg.close) {
 						setTimeout(() => {
-							tg.close();
-						}, 500);
+							tg.close()
+						}, 500)
 					}
 				} else {
-					setShareStatus(`❌ ${result.error || 'Не удалось поделиться'}`);
+					setShareStatus(`❌ ${result.error || 'Не удалось поделиться'}`)
 				}
 			} else {
 				// Для других ОС отправляем картинку в чат бота
-				console.log('🔍 Отправка в чат для Android/др. ОС:');
-				console.log('📋 initData присутствует:', !!initData);
-				console.log('📋 initData length:', initData?.length);
-				console.log('📦 shareData:', shareData);
+				console.log('🔍 Отправка в чат для Android/др. ОС:')
+				console.log('📋 initData присутствует:', !!initData)
+				console.log('📋 initData length:', initData?.length)
+				console.log('📦 shareData:', shareData)
 
-				const result = await shareResults(initData, shareData);
+				const result = await shareResults(initData, shareData)
 
 				if (result.success) {
 					// Устанавливаем флаг успешной отправки в сессии
-					setHasSharedInSession(true);
+					setHasSharedInSession(true)
 
 					// Обновляем статистику лимитов из ответа
 					if (result.rateLimitInfo) {
-						setUserShareStats((prev) =>
+						setUserShareStats(prev =>
 							prev
 								? {
 										...prev,
@@ -280,35 +291,33 @@ const Results = () => {
 											? false
 											: true,
 								  }
-								: null,
-						);
+								: null
+						)
 					}
 
 					// Показываем сообщение об успешной отправке
-					setShareStatus('✅ Изображение отправлено в чат!');
+					setShareStatus('✅ Изображение отправлено в чат!')
 
 					// Закрываем мини-приложение для всех платформ после успешной отправки
 					if (tg && tg.close) {
 						// Небольшая задержка для показа сообщения пользователю
 						setTimeout(() => {
-							tg.close();
-						}, 500);
+							tg.close()
+						}, 500)
 					}
 				} else {
-					setShareStatus(
-						`❌ ${result.message || 'Не удалось отправить в чат'}`,
-					);
+					setShareStatus(`❌ ${result.message || 'Не удалось отправить в чат'}`)
 				}
 			}
 		} catch (error: any) {
-			console.error('Ошибка при шэринге:', error);
+			console.error('Ошибка при шэринге:', error)
 
 			// Обработка ошибок лимитов
 			if (error.isRateLimit) {
-				const rateLimitError = error as RateLimitError;
+				const rateLimitError = error as RateLimitError
 
 				// Обновляем статистику из ошибки
-				setUserShareStats((prev) =>
+				setUserShareStats(prev =>
 					prev
 						? {
 								...prev,
@@ -319,72 +328,102 @@ const Results = () => {
 								nextAvailableAt: rateLimitError.nextAvailableAt,
 								canUse: false,
 						  }
-						: null,
-				);
+						: null
+				)
 
 				// Показываем специализированное сообщение об ошибке лимитов
 				if (rateLimitError.type === 'daily') {
-					setShareStatus('🚫 Превышен дневной лимит (5 изображений в день)');
+					setShareStatus('🚫 Превышен дневной лимит (5 изображений в день)')
 				} else if (rateLimitError.type === 'consecutive') {
 					const timeUntil = formatTimeUntilAvailable(
-						rateLimitError.nextAvailableAt,
-					);
-					setShareStatus(`⏳ Следующая отправка доступна ${timeUntil}`);
+						rateLimitError.nextAvailableAt
+					)
+					setShareStatus(`⏳ Следующая отправка доступна ${timeUntil}`)
 				} else {
-					setShareStatus(`❌ ${rateLimitError.message}`);
+					setShareStatus(`❌ ${rateLimitError.message}`)
 				}
 			} else {
 				// Обычные ошибки
 				if (platform === 'ios') {
 					setShareStatus(
-						`❌ ${error.message || 'Не удалось создать изображение'}`,
-					);
+						`❌ ${error.message || 'Не удалось создать изображение'}`
+					)
 				} else {
-					setShareStatus(`❌ ${error.message || 'Не удалось отправить в чат'}`);
+					setShareStatus(`❌ ${error.message || 'Не удалось отправить в чат'}`)
 				}
 			}
 		} finally {
-			setIsSharing(false);
+			setIsSharing(false)
 
 			// Очищаем статус через 3 секунды
-			setTimeout(() => setShareStatus(''), 3000);
+			setTimeout(() => setShareStatus(''), 3000)
 		}
-	};
+	}
 
 	// Функция для тестирования шэринга (только в development)
 	const getTestShareOptions = async (
-		testInitData: string,
+		testInitData: string
 	): Promise<ShareOptions> => {
 		if (!club || !hasGameData) {
-			throw new Error('Недостаточно данных для тестирования');
+			throw new Error('Недостаточно данных для тестирования')
 		}
 
 		// Преобразуем categorizedPlayers в categorizedPlayerIds (только IDs)
-		const categorizedPlayerIds: { [categoryName: string]: string[] } = {};
+		const categorizedPlayerIds: { [categoryName: string]: string[] } = {}
 
 		Object.entries(categorizedPlayers).forEach(([categoryName, players]) => {
-			categorizedPlayerIds[categoryName] = players.map((player) => player.id);
-		});
+			categorizedPlayerIds[categoryName] = players.map(player => player.id)
+		})
 
 		const shareData: ShareData = {
 			categorizedPlayerIds,
 			categories,
 			clubId: club.id,
-		};
+		}
 
 		// Получаем изображение для тестирования
-		const { blob } = await downloadResultsImage(testInitData, shareData);
+		const { blob } = await downloadResultsImage(testInitData, shareData)
 
 		return {
 			imageBlob: blob,
 			text: `Тест шэринга тир-листа - @${TELEGRAM_BOT_USERNAME}`,
 			clubName: club.name,
-		};
-	};
+		}
+	}
+
+	// Обработчики для режима редактирования позиций
+	const handleEnterEditMode = () => {
+		enterEditMode()
+	}
+
+	const handleExitEditMode = () => {
+		exitEditMode()
+	}
+
+	const handlePlayerClick = (player: any, categoryName: string) => {
+		selectPlayerForSwap(player, categoryName)
+	}
+
+	const handleSwapPlayers = () => {
+		const success = swapSelectedPlayers()
+		if (!success) {
+			// Можно добавить уведомление об ошибке
+			console.warn('Не удалось поменять местами игроков')
+		}
+	}
+
+	const handleSavePositions = () => {
+		savePositionChanges()
+	}
+
+	// Определяем какие данные показывать (в режиме редактирования - временные, иначе - обычные)
+	const displayData = isEditingPositions
+		? tempCategorizedPlayers
+		: categorizedPlayers
 
 	// Показываем загрузку, если данные еще не получены
 	if (isLoading) {
-		return <LoadingSpinner fullScreen message='Загрузка результатов...' />;
+		return <LoadingSpinner fullScreen message='Загрузка результатов...' />
 	}
 
 	// Показываем ошибку, если что-то пошло не так
@@ -413,7 +452,7 @@ const Results = () => {
 					</button>
 				</div>
 			</div>
-		);
+		)
 	}
 
 	// Показываем сообщение, если нет данных игры
@@ -445,7 +484,7 @@ const Results = () => {
 					</button>
 				</div>
 			</div>
-		);
+		)
 	}
 
 	return (
@@ -472,10 +511,10 @@ const Results = () => {
 									alt={club.name}
 									className='w-10 object-contain rounded-full'
 									loading='eager'
-									onError={(e) => {
+									onError={e => {
 										// Если логотип не загрузился, скрываем изображение
-										const target = e.target as HTMLImageElement;
-										target.style.display = 'none';
+										const target = e.target as HTMLImageElement
+										target.style.display = 'none'
 									}}
 								/>
 							)}
@@ -487,8 +526,8 @@ const Results = () => {
 
 					{/* Список категорий */}
 					<ul className='category_list flex flex-col gap-3 mb-6'>
-						{categories.map((category) => {
-							const players = categorizedPlayers[category.name] || [];
+						{categories.map(category => {
+							const players = displayData[category.name] || []
 							return (
 								<CategoryItem
 									key={`category-${category.name}`}
@@ -496,8 +535,11 @@ const Results = () => {
 									players={players}
 									showPlayerImages={true}
 									showSkeletons={true}
+									isEditMode={isEditingPositions}
+									selectedPlayers={selectedPlayers}
+									onPlayerClick={handlePlayerClick}
 								/>
-							);
+							)
 						})}
 					</ul>
 
@@ -508,116 +550,133 @@ const Results = () => {
 							<p>
 								Доступные методы:{' '}
 								{availableMethods
-									.filter((m) => m.available)
-									.map((m) => m.name)
+									.filter(m => m.available)
+									.map(m => m.name)
 									.join(', ')}
 							</p>
 						</div>
 					)}
 
-					{/* Информация о лимитах пользователя */}
-					{/* {isAdmin && userShareStats && !isLoadingStats && (
-						<div className='mb-4 p-3 bg-gray-50 rounded-lg border'>
-							<div className='text-sm text-gray-600 text-center'>
-								<div className='flex justify-between items-center mb-1'>
-									<span>Использовано сегодня:</span>
-									<span className='font-semibold'>
-										{userShareStats.dailyUsed}/{userShareStats.dailyLimit}
-									</span>
-								</div>
-								<div className='flex justify-between items-center mb-1'>
-									<span>Осталось попыток:</span>
-									<span
-										className={`font-semibold ${
-											userShareStats.dailyRemaining > 0
-												? 'text-green-600'
-												: 'text-red-600'
+					{/* Кнопки управления */}
+					<div className='flex flex-col items-center justify-center gap-2'>
+						{isEditingPositions ? (
+							<>
+								{/* Режим редактирования позиций */}
+								{selectedPlayers.length === 2 && (
+									<button
+										className='bg-green-500 text-white font-bold py-3 px-8 rounded-lg text-lg w-fit hover:bg-green-600 transition-colors'
+										onClick={handleSwapPlayers}
+									>
+										🔄 Поменять местами
+									</button>
+								)}
+
+								{selectedPlayers.length > 0 && (
+									<div className='text-sm text-gray-600 text-center mb-2'>
+										Выбрано игроков: {selectedPlayers.length}/2
+										{selectedPlayers.length < 2 && (
+											<div className='text-xs mt-1'>
+												Выберите еще {2 - selectedPlayers.length} игрока для
+												замены
+											</div>
+										)}
+									</div>
+								)}
+
+								<button
+									className='bg-[#FFEC13] text-black font-bold py-3 px-8 rounded-lg text-lg w-fit hover:bg-yellow-300 transition-colors'
+									onClick={handleSavePositions}
+								>
+									💾 Сохранить
+								</button>
+
+								<button
+									className='bg-gray-500 text-white font-bold py-2 px-6 rounded-lg text-base w-fit hover:bg-gray-600 transition-colors'
+									onClick={handleExitEditMode}
+								>
+									❌ Отменить
+								</button>
+							</>
+						) : (
+							<>
+								{/* Обычный режим */}
+								<button
+									className={`font-bold py-3 px-8 rounded-lg text-lg w-fit disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 ${
+										hasSharedInSession
+											? 'bg-gray-300 text-gray-600'
+											: userShareStats && !isShareAvailable()
+											? 'bg-gray-400 text-gray-700'
+											: 'bg-[#FFEC13] text-black'
+									}`}
+									onClick={handleShare}
+									disabled={
+										isSharing ||
+										hasSharedInSession ||
+										(userShareStats ? !isShareAvailable() : false)
+									}
+								>
+									{hasSharedInSession
+										? '✅ Отправлено'
+										: isSharing
+										? platform === 'ios'
+											? 'Подготавливаем...'
+											: 'Отправляем...'
+										: userShareStats && !isShareAvailable()
+										? userShareStats.dailyRemaining <= 0
+											? 'Лимит исчерпан'
+											: userShareStats.nextAvailableAt
+											? `Доступно ${formatTimeUntilAvailable(
+													userShareStats.nextAvailableAt
+											  )}`
+											: 'Недоступно'
+										: platform === 'ios'
+										? 'Поделиться'
+										: 'Отправить в чат'}
+								</button>
+
+								{!isAdmin && (
+									<>
+										<button
+											className='bg-purple-500 text-white font-bold py-3 px-8 rounded-lg text-lg w-fit hover:bg-purple-600 transition-colors'
+											onClick={handleEnterEditMode}
+										>
+											🔀 Поменять позиции
+										</button>
+										<Link
+											to='/select-team'
+											className='inline-block bg-[#FFEC13] text-black font-bold py-3 px-8 rounded-lg text-lg w-fit'
+										>
+											Собрать новый тир-лист
+										</Link>
+									</>
+								)}
+
+								{/* Статус шэринга */}
+								{shareStatus && (
+									<div
+										className={`text-sm px-4 py-2 rounded-lg max-w-xs text-center ${
+											shareStatus.startsWith('✅')
+												? 'bg-green-100 text-green-800'
+												: shareStatus.startsWith('❌')
+												? 'bg-red-100 text-red-800'
+												: shareStatus.startsWith('🚫')
+												? 'bg-orange-100 text-orange-800'
+												: 'bg-blue-100 text-blue-800'
 										}`}
 									>
-										{userShareStats.dailyRemaining}
-									</span>
-								</div>
-								{userShareStats.nextAvailableAt && (
-									<div className='text-xs text-orange-600 mt-2'>
-										⏳ Следующая отправка:{' '}
-										{formatTimeUntilAvailable(userShareStats.nextAvailableAt)}
+										{shareStatus}
 									</div>
 								)}
-								{userShareStats.consecutiveCount >=
-									userShareStats.consecutiveLimit && (
-									<div className='text-xs text-blue-600 mt-1'>
-										💤 Интервал {userShareStats.intervalMinutes} мин после{' '}
-										{userShareStats.consecutiveLimit} запросов подряд
-									</div>
+
+								{isAdmin && (
+									<Link
+										to='/admin'
+										className='inline-block bg-[#FFEC13] text-black font-bold py-3 px-8 rounded-lg text-lg w-fit'
+									>
+										Админ
+									</Link>
 								)}
-							</div>
-						</div>
-					)} */}
-
-					{/* Кнопка поделиться и статус */}
-
-					<div className='flex flex-col items-center justify-center gap-2'>
-						<button
-							className={`font-bold py-3 px-8 rounded-lg text-lg w-fit disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 ${
-								hasSharedInSession
-									? 'bg-gray-300 text-gray-600'
-									: userShareStats && !isShareAvailable()
-									? 'bg-gray-400 text-gray-700'
-									: 'bg-[#FFEC13] text-black'
-							}`}
-							onClick={handleShare}
-							disabled={
-								isSharing ||
-								hasSharedInSession ||
-								(userShareStats ? !isShareAvailable() : false)
-							}
-						>
-							{hasSharedInSession
-								? '✅ Отправлено'
-								: isSharing
-								? platform === 'ios'
-									? 'Подготавливаем...'
-									: 'Отправляем...'
-								: userShareStats && !isShareAvailable()
-								? userShareStats.dailyRemaining <= 0
-									? 'Лимит исчерпан'
-									: userShareStats.nextAvailableAt
-									? `Доступно ${formatTimeUntilAvailable(
-											userShareStats.nextAvailableAt,
-									  )}`
-									: 'Недоступно'
-								: platform === 'ios'
-								? 'Поделиться'
-								: 'Отправить в чат'}
-						</button> 
-						<Link to='/select-team' className='inline-block bg-[#FFEC13] text-black font-bold py-3 px-8 rounded-lg text-lg w-fit'>
-							Собрать новый тир-лист
-						</Link>
-
-						{/* Статус шэринга */}
-						{shareStatus && (
-							<div
-								className={`text-sm px-4 py-2 rounded-lg max-w-xs text-center ${
-									shareStatus.startsWith('✅')
-										? 'bg-green-100 text-green-800'
-										: shareStatus.startsWith('❌')
-										? 'bg-red-100 text-red-800'
-										: shareStatus.startsWith('🚫')
-										? 'bg-orange-100 text-orange-800'
-										: 'bg-blue-100 text-blue-800'
-								}`}
-							>
-								{shareStatus}
-							</div>
-						)}
-
-						{isAdmin && (
-							<Link
-								to='/admin'
-								className='inline-block bg-[#FFEC13] text-black font-bold py-3 px-8 rounded-lg text-lg w-fit'
-							>
-								Админ
-							</Link>
+							</>
 						)}
 					</div>
 				</div>
@@ -631,7 +690,7 @@ const Results = () => {
 				/>
 			)}
 		</div>
-	);
-};
+	)
+}
 
-export default Results;
+export default Results
