@@ -525,7 +525,7 @@ const Results = () => {
 					</div>
 
 					{/* Список категорий */}
-					<ul className='category_list flex flex-col gap-3 mb-6'>
+					<ul className='category_list flex flex-col gap-3 mb-4'>
 						{categories.map(category => {
 							const players = displayData[category.name] || []
 							return (
@@ -572,15 +572,13 @@ const Results = () => {
 								)}
 
 								<div className='text-sm text-center mb-2'>
-									{selectedPlayers.length === 0 && (
-										<div className='text-xs mt-1'>
-											{selectedPlayers.length === 0
-												? 'Выбери кого ты хочешь заменить'
-												: selectedPlayers.length === 1
-												? 'На кого меняем?'
-												: ''}
-										</div>
-									)}
+									<div className='mt-1'>
+										{selectedPlayers.length === 0
+											? 'Выбери кого ты хочешь заменить'
+											: selectedPlayers.length === 1
+											? 'На кого меняем?'
+											: ''}
+									</div>
 								</div>
 
 								<button
