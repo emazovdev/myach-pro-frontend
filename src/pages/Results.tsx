@@ -254,7 +254,6 @@ const Results = () => {
 
 					// Показываем сообщение об успешной отправке
 					setShareStatus('✅ Изображение поделено!')
-
 				} else {
 					setShareStatus(`❌ ${result.error || 'Не удалось поделиться'}`)
 				}
@@ -617,13 +616,16 @@ const Results = () => {
 										? 'Поделиться'
 										: 'Отправить в чат'}
 								</button>
-								<button
-									className='bg-[#EC3381] text-white font-bold py-3 px-8 rounded-lg text-lg w-fit transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
-									onClick={handleEnterEditMode}
-									disabled={isSharing}
-								>
-									Поменять позиции
-								</button>
+								
+								{!hasSharedInSession && (
+									<button
+										className='bg-[#EC3381] text-white font-bold py-3 px-8 rounded-lg text-lg w-fit transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
+										onClick={handleEnterEditMode}
+										disabled={isSharing}
+									>
+										Поменять позиции
+									</button>
+								)}
 
 								<Link
 									to='/select-team'
