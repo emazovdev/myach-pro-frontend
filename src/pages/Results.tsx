@@ -564,7 +564,7 @@ const Results = () => {
 								{/* Режим редактирования позиций */}
 								{selectedPlayers.length === 2 && (
 									<button
-										className='bg-green-500 text-white font-bold py-3 px-8 rounded-lg text-lg w-fit hover:bg-green-600 transition-colors'
+										className='bg-green-500 text-white font-bold py-3 px-8 rounded-lg text-lg w-fit'
 										onClick={handleSwapPlayers}
 									>
 										Поменять местами
