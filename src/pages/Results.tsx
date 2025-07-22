@@ -634,7 +634,7 @@ const Results = () => {
 										: 'Отправить в чат'}
 								</button>
 
-								{!isAdmin && (
+								{isAdmin && (
 									<>
 										<button
 											className='bg-purple-500 text-white font-bold py-3 px-8 rounded-lg text-lg w-fit hover:bg-purple-600 transition-colors'
