@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import {
 	getPlayerRatings,
 	type ClubRatingsResponse,
@@ -12,11 +12,45 @@ import { getProxyImageUrl } from '../utils/imageUtils'
 const PlayerRatingsPage = () => {
 	const { clubId } = useParams<{ clubId: string }>()
 	const navigate = useNavigate()
+	const location = useLocation()
 	const { initData } = useTelegram()
 	const { isAdmin } = useUserStore()
 	const [ratings, setRatings] = useState<ClubRatingsResponse | null>(null)
 	const [isLoading, setIsLoading] = useState(true)
 	const [error, setError] = useState<string | null>(null)
+
+	// Получаем источник навигации из state
+	const source = location.state?.source as
+		| 'admin'
+		| 'results'
+		| 'analytics'
+		| undefined
+
+	// Определяем куда вести кнопку "Назад" в зависимости от источника
+	const getBackRoute = () => {
+		switch (source) {
+			case 'results':
+				return '/results'
+			case 'analytics':
+				return '/admin/analytics'
+			case 'admin':
+			default:
+				return isAdmin ? '/admin' : '/results'
+		}
+	}
+
+	// Определяем текст кнопки "Назад"
+	const getBackButtonText = () => {
+		switch (source) {
+			case 'results':
+				return 'К результатам'
+			case 'analytics':
+				return 'К аналитике'
+			case 'admin':
+			default:
+				return isAdmin ? 'В админ панель' : 'К результатам'
+		}
+	}
 
 	useEffect(() => {
 		const loadRatings = async () => {
@@ -73,9 +107,9 @@ const PlayerRatingsPage = () => {
 							background: 'var(--tg-theme-button-color)',
 							color: 'var(--tg-theme-button-text-color)',
 						}}
-						onClick={() => navigate(isAdmin ? '/admin' : '/results')}
+						onClick={() => navigate(getBackRoute())}
 					>
-						{isAdmin ? 'Вернуться в админ панель' : 'Вернуться к результатам'}
+						{getBackButtonText()}
 					</button>
 				</div>
 			</div>
@@ -105,9 +139,9 @@ const PlayerRatingsPage = () => {
 							background: 'var(--tg-theme-button-color)',
 							color: 'var(--tg-theme-button-text-color)',
 						}}
-						onClick={() => navigate(isAdmin ? '/admin' : '/results')}
+						onClick={() => navigate(getBackRoute())}
 					>
-						{isAdmin ? 'Вернуться в админ панель' : 'Вернуться к результатам'}
+						{getBackButtonText()}
 					</button>
 				</div>
 			</div>
@@ -126,14 +160,14 @@ const PlayerRatingsPage = () => {
 				{/* Заголовок */}
 				<div className='flex items-center justify-around mb-6'>
 					<button
-						onClick={() => navigate(isAdmin ? '/admin' : '/results')}
+						onClick={() => navigate(getBackRoute())}
 						className='px-4 py-2 rounded-lg font-medium transition-opacity hover:opacity-80'
 						style={{
 							background: 'var(--tg-theme-button-color)',
 							color: 'var(--tg-theme-button-text-color)',
 						}}
 					>
-						← Назад
+						← {getBackButtonText()}
 					</button>
 
 					<div>

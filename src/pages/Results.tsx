@@ -667,6 +667,7 @@ const Results = () => {
 								{club && (
 									<Link
 										to={`/admin/ratings/${club.id}`}
+										state={{ source: 'results' }}
 										className={`inline-block bg-[#28A745] text-white font-bold py-3 px-8 rounded-lg text-lg w-fit ${
 											isSharing
 												? 'opacity-50 cursor-not-allowed pointer-events-none'

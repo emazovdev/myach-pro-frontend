@@ -58,7 +58,9 @@ const AdminPage = () => {
 	// Обработчик выбора клуба для рейтингов
 	const handleClubSelect = (clubId: string) => {
 		setShowClubSelectionModal(false)
-		navigate(`/admin/ratings/${clubId}`)
+		navigate(`/admin/ratings/${clubId}`, {
+			state: { source: 'admin' },
+		})
 	}
 
 	// КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Функция принудительной очистки всех кэшей
