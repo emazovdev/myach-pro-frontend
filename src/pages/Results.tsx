@@ -247,9 +247,6 @@ const Results = () => {
 				if (result.success) {
 					// Устанавливаем флаг успешной отправки в сессии
 					setHasSharedInSession(true)
-
-					// Показываем сообщение об успешной отправке
-					setShareStatus('✅ Изображение поделено!')
 				} else {
 					setShareStatus(`❌ ${result.error || 'Не удалось поделиться'}`)
 				}
@@ -668,7 +665,7 @@ const Results = () => {
 									<Link
 										to={`/admin/ratings/${club.id}`}
 										state={{ source: 'results' }}
-										className={`inline-block bg-[#28A745] text-white font-bold py-3 px-8 rounded-lg text-lg w-fit ${
+										className={`inline-block bg-[#FFEC13] text-black font-bold py-3 px-8 rounded-lg text-lg w-fit ${
 											isSharing
 												? 'opacity-50 cursor-not-allowed pointer-events-none'
 												: ''
