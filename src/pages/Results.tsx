@@ -125,8 +125,8 @@ const Results = () => {
 				// В случае ошибки устанавливаем дефолтные значения
 				setUserShareStats({
 					dailyUsed: 0,
-					dailyLimit: 5,
-					dailyRemaining: 5,
+					dailyLimit: 10,
+					dailyRemaining: 10,
 					consecutiveCount: 0,
 					consecutiveLimit: 2,
 					nextAvailableAt: null,
@@ -188,7 +188,7 @@ const Results = () => {
 			// Проверяем лимиты пользователя
 			if (userShareStats && !isShareAvailable()) {
 				if (userShareStats.dailyRemaining <= 0) {
-					setShareStatus('🚫 Превышен дневной лимит (5 изображений в день)')
+					setShareStatus('🚫 Превышен дневной лимит (10 изображений в день)')
 				} else if (!userShareStats.canUse && userShareStats.nextAvailableAt) {
 					const timeUntil = formatTimeUntilAvailable(
 						userShareStats.nextAvailableAt
@@ -296,7 +296,7 @@ const Results = () => {
 
 				// Показываем специализированное сообщение об ошибке лимитов
 				if (rateLimitError.type === 'daily') {
-					setShareStatus('🚫 Превышен дневной лимит (5 изображений в день)')
+					setShareStatus('🚫 Превышен дневной лимит (10 изображений в день)')
 				} else if (rateLimitError.type === 'consecutive') {
 					const timeUntil = formatTimeUntilAvailable(
 						rateLimitError.nextAvailableAt
