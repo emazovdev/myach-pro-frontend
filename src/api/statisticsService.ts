@@ -66,7 +66,7 @@ export const getPlayerRatings = async (
 	clubId: string
 ): Promise<ClubRatingsResponse> => {
 	try {
-		const response = await fetch(`${API_BASE_URL}/ratings/${clubId}`, {
+		const response = await fetch(`${API_BASE_URL}/statistics/ratings/${clubId}`, {
 			method: 'GET',
 			headers: {
 				'Content-Type': 'application/json',
