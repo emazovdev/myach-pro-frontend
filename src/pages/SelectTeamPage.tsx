@@ -1,39 +1,39 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useTelegram } from '../hooks/useTelegram';
-import { fetchClubs } from '../api';
-import { LoadingSpinner } from '../components';
-import type { Club } from '../types';
+import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { fetchClubs } from '../api'
+import { LoadingSpinner } from '../components'
+import { useTelegram } from '../hooks/useTelegram'
+import type { Club } from '../types'
 
 const SelectTeamPage = () => {
-	const navigate = useNavigate();
-	const { initData } = useTelegram();
+	const navigate = useNavigate()
+	const { initData } = useTelegram()
 
-	const [clubs, setClubs] = useState<Club[]>([]);
-	const [isLoading, setIsLoading] = useState(true);
-	const [error, setError] = useState<string | null>(null);
+	const [clubs, setClubs] = useState<Club[]>([])
+	const [isLoading, setIsLoading] = useState(true)
+	const [error, setError] = useState<string | null>(null)
 
 	useEffect(() => {
 		const loadClubs = async () => {
 			if (!initData) {
-				setError('Данные Telegram не найдены');
-				setIsLoading(false);
-				return;
+				setError('Данные Telegram не найдены')
+				setIsLoading(false)
+				return
 			}
 
 			try {
-				const clubsData = await fetchClubs(initData);
-				setClubs(clubsData);
+				const clubsData = await fetchClubs(initData)
+				setClubs(clubsData)
 			} catch (err) {
-				console.error('Ошибка при загрузке команд:', err);
-				setError('Не удалось загрузить команды');
+				console.error('Ошибка при загрузке команд:', err)
+				setError('Не удалось загрузить команды')
 			} finally {
-				setIsLoading(false);
+				setIsLoading(false)
 			}
-		};
+		}
 
-		loadClubs();
-	}, [initData]);
+		loadClubs()
+	}, [initData])
 
 	const handleTeamSelect = (club: Club) => {
 		// Переходим в игру с выбранной командой
@@ -41,11 +41,11 @@ const SelectTeamPage = () => {
 			state: {
 				selectedClub: club,
 			},
-		});
-	};
+		})
+	}
 
 	if (isLoading) {
-		return <LoadingSpinner fullScreen message='Загрузка команд...' />;
+		return <LoadingSpinner fullScreen message='Загрузка команд...' />
 	}
 
 	if (error || clubs.length === 0) {
@@ -61,7 +61,7 @@ const SelectTeamPage = () => {
 					{error || 'Команды не найдены'}
 				</div>
 				<button
-					onClick={() => navigate('/guide')}
+					onClick={() => navigate('/')}
 					className='py-3 px-6 rounded-lg transition-opacity hover:opacity-80'
 					style={{
 						background: 'var(--tg-theme-button-color)',
@@ -71,7 +71,7 @@ const SelectTeamPage = () => {
 					Назад
 				</button>
 			</div>
-		);
+		)
 	}
 
 	return (
@@ -87,7 +87,7 @@ const SelectTeamPage = () => {
 				<div className='flex items-center justify-between mb-8'>
 					<div className='flex items-center gap-4'>
 						<button
-							onClick={() => navigate('/guide')}
+							onClick={() => navigate('/')}
 							className='text-lg transition-opacity hover:opacity-70'
 							style={{ color: 'var(--tg-theme-link-color)' }}
 						>
@@ -134,7 +134,7 @@ const SelectTeamPage = () => {
 					) : (
 						/* Если команд много - показываем сетку */
 						<div className='grid grid-cols-2 gap-4'>
-							{clubs.map((club) => (
+							{clubs.map(club => (
 								<div
 									key={club.id}
 									onClick={() => handleTeamSelect(club)}
@@ -170,7 +170,7 @@ const SelectTeamPage = () => {
 				</div>
 			</div>
 		</div>
-	);
-};
+	)
+}
 
-export default SelectTeamPage;
+export default SelectTeamPage

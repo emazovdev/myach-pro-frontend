@@ -229,7 +229,7 @@ const AdminPage = () => {
 					</Link>
 
 					<Link
-						to='/guide'
+						to='/select-team'
 						className='flex items-center justify-center p-4 rounded-lg font-medium text-center transition-opacity hover:opacity-80'
 						style={{
 							background: 'var(--tg-theme-button-color)',

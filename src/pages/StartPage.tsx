@@ -1,27 +1,27 @@
-import { useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { useUserStore } from '../store';
+import { useEffect } from 'react'
+import { Link } from 'react-router-dom'
+import { useUserStore } from '../store'
 
 // Preload критически важные изображения
 const preloadCriticalImages = () => {
-	const images = ['/main_bg.jpg', '/main_logo.png'];
+	const images = ['/main_bg.jpg', '/main_logo.png']
 
-	images.forEach((src) => {
-		const link = document.createElement('link');
-		link.rel = 'preload';
-		link.as = 'image';
-		link.href = src;
-		document.head.appendChild(link);
-	});
-};
+	images.forEach(src => {
+		const link = document.createElement('link')
+		link.rel = 'preload'
+		link.as = 'image'
+		link.href = src
+		document.head.appendChild(link)
+	})
+}
 
 const StartPage = () => {
-	const { isAdmin, isLoading, telegramId } = useUserStore();
+	const { isAdmin, isLoading, telegramId } = useUserStore()
 
 	// Preload критических изображений при монтировании компонента
 	useEffect(() => {
-		preloadCriticalImages();
-	}, []);
+		preloadCriticalImages()
+	}, [])
 
 	return (
 		<div className='welcome bg-[url("/main_bg.jpg")] bg-cover bg-center h-full'>
@@ -39,7 +39,7 @@ const StartPage = () => {
 				<div className='flex flex-col gap-3'>
 					{isLoading || telegramId ? (
 						<Link
-							to={isAdmin ? '/admin' : '/guide'}
+							to={isAdmin ? '/admin' : '/select-team'}
 							className='link_btn bg-[#FFEC13] text-[clamp(1rem,2vh,1.5rem)] text-black py-[clamp(1rem,1vh,2rem)]'
 						>
 							{isLoading ? 'Подождите...' : isAdmin ? 'Админ' : 'Поехали!'}
@@ -55,7 +55,7 @@ const StartPage = () => {
 				</div>
 			</div>
 		</div>
-	);
-};
+	)
+}
 
-export default StartPage;
+export default StartPage

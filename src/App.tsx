@@ -11,11 +11,12 @@ const StartPage = lazy(() =>
 		default: () => <div>Ошибка загрузки стартовой страницы</div>,
 	}))
 )
-const Guide = lazy(() =>
-	import('./pages/Guide').catch(() => ({
-		default: () => <div>Ошибка загрузки руководства</div>,
-	}))
-)
+// ВРЕМЕННО ОТКЛЮЧЕНА: страница Guide
+// const Guide = lazy(() =>
+// 	import('./pages/Guide').catch(() => ({
+// 		default: () => <div>Ошибка загрузки руководства</div>,
+// 	}))
+// )
 const SelectTeamPage = lazy(() =>
 	import('./pages/SelectTeamPage').catch(() => ({
 		default: () => <div>Ошибка загрузки страницы выбора команды</div>,
@@ -122,7 +123,8 @@ function App() {
 				<Suspense fallback={<LoadingSpinner fullScreen message='Загрузка..' />}>
 					<Routes>
 						<Route index element={<StartPage />} />
-						<Route path='/guide' element={<Guide />} />
+						{/* ВРЕМЕННО ОТКЛЮЧЕН: маршрут Guide */}
+						{/* <Route path='/guide' element={<Guide />} /> */}
 						<Route path='/select-team' element={<SelectTeamPage />} />
 						<Route path='/game' element={<Game />} />
 						<Route path='/results' element={<Results />} />
