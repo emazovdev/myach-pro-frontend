@@ -49,11 +49,13 @@ const Results = () => {
 		isEditingPositions,
 		selectedPlayers,
 		tempCategorizedPlayers,
+		hasCompletedInitialStep,
 		enterEditMode,
 		exitEditMode,
 		selectPlayerForSwap,
 		swapSelectedPlayers,
 		savePositionChanges,
+		completeInitialStep,
 	} = useGameStore()
 	const [club, setClub] = useState<any>(null)
 	const [isLoading, setIsLoading] = useState(true)
@@ -67,7 +69,6 @@ const Results = () => {
 		null
 	)
 	// const [isLoadingStats, setIsLoadingStats] = useState(false);
-	const [hasCompletedInitialStep, setHasCompletedInitialStep] = useState(false)
 
 	// Проверяем, есть ли данные игры
 	const hasGameData =
@@ -396,11 +397,11 @@ const Results = () => {
 			await saveGameResults(initData, gameResult)
 
 			// Переходим к следующему этапу
-			setHasCompletedInitialStep(true)
+			completeInitialStep()
 		} catch (error) {
 			console.error('Ошибка при сохранении статистики:', error)
 			// Все равно переходим к следующему этапу, даже если статистика не сохранилась
-			setHasCompletedInitialStep(true)
+			completeInitialStep()
 		}
 	}
 
@@ -663,6 +664,18 @@ const Results = () => {
 								</button>
 
 								{/* Кнопка для просмотра рейтинга */}
+								{club && (
+									<Link
+										to={`/admin/ratings/${club.id}`}
+										className={`inline-block bg-[#28A745] text-white font-bold py-3 px-8 rounded-lg text-lg w-fit ${
+											isSharing
+												? 'opacity-50 cursor-not-allowed pointer-events-none'
+												: ''
+										}`}
+									>
+										Посмотреть рейтинг
+									</Link>
+								)}
 
 								<Link
 									to='/select-team'
@@ -693,30 +706,16 @@ const Results = () => {
 								)}
 
 								{isAdmin && (
-									<>
-										{club && (
-											<Link
-												to={`/admin/ratings/${club.id}`}
-												className={`inline-block bg-[#28A745] text-white font-bold py-3 px-8 rounded-lg text-lg w-fit ${
-													isSharing
-														? 'opacity-50 cursor-not-allowed pointer-events-none'
-														: ''
-												}`}
-											>
-												Посмотреть рейтинг
-											</Link>
-										)}
-										<Link
-											to='/admin'
-											className={`inline-block bg-[#FFEC13] text-black font-bold py-3 px-8 rounded-lg text-lg w-fit ${
-												isSharing
-													? 'opacity-50 cursor-not-allowed pointer-events-none'
-													: ''
-											}`}
-										>
-											Админ
-										</Link>
-									</>
+									<Link
+										to='/admin'
+										className={`inline-block bg-[#FFEC13] text-black font-bold py-3 px-8 rounded-lg text-lg w-fit ${
+											isSharing
+												? 'opacity-50 cursor-not-allowed pointer-events-none'
+												: ''
+										}`}
+									>
+										Админ
+									</Link>
 								)}
 							</>
 						)}

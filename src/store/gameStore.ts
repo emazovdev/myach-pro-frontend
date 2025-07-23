@@ -54,6 +54,9 @@ interface GameState {
 	selectedPlayers: SelectedPlayer[]
 	tempCategorizedPlayers: CategorizedPlayers
 
+	// Состояние завершения игры
+	hasCompletedInitialStep: boolean
+
 	// Computed values
 	progressPercentage: number
 
@@ -75,6 +78,9 @@ interface GameState {
 	selectPlayerForSwap: (player: Player, categoryName: string) => void
 	swapSelectedPlayers: () => boolean
 	savePositionChanges: () => void
+
+	// Метод для завершения игры
+	completeInitialStep: () => void
 }
 
 const initialState = {
@@ -92,6 +98,7 @@ const initialState = {
 	isEditingPositions: false,
 	selectedPlayers: [],
 	tempCategorizedPlayers: {} as CategorizedPlayers,
+	hasCompletedInitialStep: false,
 }
 
 export const useGameStore = create<GameState>()(
@@ -276,6 +283,7 @@ export const useGameStore = create<GameState>()(
 							isLoading: false,
 							gameHistory: [],
 							canGoBack: false,
+							hasCompletedInitialStep: false,
 						})
 					} catch (error) {
 						console.error('Ошибка при инициализации игры:', error)
@@ -339,116 +347,133 @@ export const useGameStore = create<GameState>()(
 						canGoBack: newCurrentIndex > 0,
 					})
 
-									return true
-			},
+					return true
+				},
 
-			// Методы для редактирования позиций
-			enterEditMode: () => {
-				const state = get()
-				set({
-					isEditingPositions: true,
-					selectedPlayers: [],
-					tempCategorizedPlayers: { ...state.categorizedPlayers },
-				})
-			},
-
-			exitEditMode: () => {
-				set({
-					isEditingPositions: false,
-					selectedPlayers: [],
-					tempCategorizedPlayers: {} as CategorizedPlayers,
-				})
-			},
-
-			selectPlayerForSwap: (player: Player, categoryName: string) => {
-				const state = get()
-				const existing = state.selectedPlayers.find(
-					sp => sp.player.id === player.id && sp.categoryName === categoryName
-				)
-
-				if (existing) {
-					// Убираем игрока из выбранных
+				// Методы для редактирования позиций
+				enterEditMode: () => {
+					const state = get()
 					set({
-						selectedPlayers: state.selectedPlayers.filter(
-							sp => !(sp.player.id === player.id && sp.categoryName === categoryName)
-						),
+						isEditingPositions: true,
+						selectedPlayers: [],
+						tempCategorizedPlayers: { ...state.categorizedPlayers },
 					})
-				} else if (state.selectedPlayers.length < 2) {
-					// Добавляем игрока к выбранным (максимум 2)
+				},
+
+				exitEditMode: () => {
 					set({
-						selectedPlayers: [...state.selectedPlayers, { player, categoryName }],
+						isEditingPositions: false,
+						selectedPlayers: [],
+						tempCategorizedPlayers: {} as CategorizedPlayers,
 					})
-				}
-			},
+				},
 
-			swapSelectedPlayers: () => {
-				const state = get()
-				if (state.selectedPlayers.length !== 2) {
-					return false
-				}
+				selectPlayerForSwap: (player: Player, categoryName: string) => {
+					const state = get()
+					const existing = state.selectedPlayers.find(
+						sp => sp.player.id === player.id && sp.categoryName === categoryName
+					)
 
-				const first = state.selectedPlayers[0]
-				const second = state.selectedPlayers[1]
-				
-				if (!first || !second) {
-					return false
-				}
-
-				const newTempCategories = { ...state.tempCategorizedPlayers }
-
-				// Найдем позиции игроков в их категориях
-				const firstCategoryPlayers = newTempCategories[first.categoryName] || []
-				const secondCategoryPlayers = newTempCategories[second.categoryName] || []
-
-				const firstPlayerIndex = firstCategoryPlayers.findIndex(p => p.id === first.player.id)
-				const secondPlayerIndex = secondCategoryPlayers.findIndex(p => p.id === second.player.id)
-
-				if (firstPlayerIndex === -1 || secondPlayerIndex === -1) {
-					return false
-				}
-
-				// Выполняем замену
-				if (first.categoryName === second.categoryName) {
-					// Игроки в одной категории - просто меняем местами
-					const categoryPlayers = [...firstCategoryPlayers]
-					const firstPlayer = categoryPlayers[firstPlayerIndex]
-					const secondPlayer = categoryPlayers[secondPlayerIndex]
-					
-					if (firstPlayer && secondPlayer) {
-						categoryPlayers[firstPlayerIndex] = secondPlayer
-						categoryPlayers[secondPlayerIndex] = firstPlayer
-						newTempCategories[first.categoryName] = categoryPlayers
+					if (existing) {
+						// Убираем игрока из выбранных
+						set({
+							selectedPlayers: state.selectedPlayers.filter(
+								sp =>
+									!(
+										sp.player.id === player.id &&
+										sp.categoryName === categoryName
+									)
+							),
+						})
+					} else if (state.selectedPlayers.length < 2) {
+						// Добавляем игрока к выбранным (максимум 2)
+						set({
+							selectedPlayers: [
+								...state.selectedPlayers,
+								{ player, categoryName },
+							],
+						})
 					}
-				} else {
-					// Игроки в разных категориях - меняем между категориями
-					const firstCategoryUpdated = [...firstCategoryPlayers]
-					const secondCategoryUpdated = [...secondCategoryPlayers]
+				},
 
-					firstCategoryUpdated[firstPlayerIndex] = second.player
-					secondCategoryUpdated[secondPlayerIndex] = first.player
+				swapSelectedPlayers: () => {
+					const state = get()
+					if (state.selectedPlayers.length !== 2) {
+						return false
+					}
 
-					newTempCategories[first.categoryName] = firstCategoryUpdated
-					newTempCategories[second.categoryName] = secondCategoryUpdated
-				}
+					const first = state.selectedPlayers[0]
+					const second = state.selectedPlayers[1]
 
-				set({
-					tempCategorizedPlayers: newTempCategories,
-					selectedPlayers: [], // Очищаем выбранных после замены
-				})
+					if (!first || !second) {
+						return false
+					}
 
-				return true
-			},
+					const newTempCategories = { ...state.tempCategorizedPlayers }
 
-			savePositionChanges: () => {
-				const state = get()
-				set({
-					categorizedPlayers: { ...state.tempCategorizedPlayers },
-					isEditingPositions: false,
-					selectedPlayers: [],
-					tempCategorizedPlayers: {} as CategorizedPlayers,
-				})
-			},
-		}),
+					// Найдем позиции игроков в их категориях
+					const firstCategoryPlayers =
+						newTempCategories[first.categoryName] || []
+					const secondCategoryPlayers =
+						newTempCategories[second.categoryName] || []
+
+					const firstPlayerIndex = firstCategoryPlayers.findIndex(
+						p => p.id === first.player.id
+					)
+					const secondPlayerIndex = secondCategoryPlayers.findIndex(
+						p => p.id === second.player.id
+					)
+
+					if (firstPlayerIndex === -1 || secondPlayerIndex === -1) {
+						return false
+					}
+
+					// Выполняем замену
+					if (first.categoryName === second.categoryName) {
+						// Игроки в одной категории - просто меняем местами
+						const categoryPlayers = [...firstCategoryPlayers]
+						const firstPlayer = categoryPlayers[firstPlayerIndex]
+						const secondPlayer = categoryPlayers[secondPlayerIndex]
+
+						if (firstPlayer && secondPlayer) {
+							categoryPlayers[firstPlayerIndex] = secondPlayer
+							categoryPlayers[secondPlayerIndex] = firstPlayer
+							newTempCategories[first.categoryName] = categoryPlayers
+						}
+					} else {
+						// Игроки в разных категориях - меняем между категориями
+						const firstCategoryUpdated = [...firstCategoryPlayers]
+						const secondCategoryUpdated = [...secondCategoryPlayers]
+
+						firstCategoryUpdated[firstPlayerIndex] = second.player
+						secondCategoryUpdated[secondPlayerIndex] = first.player
+
+						newTempCategories[first.categoryName] = firstCategoryUpdated
+						newTempCategories[second.categoryName] = secondCategoryUpdated
+					}
+
+					set({
+						tempCategorizedPlayers: newTempCategories,
+						selectedPlayers: [], // Очищаем выбранных после замены
+					})
+
+					return true
+				},
+
+				savePositionChanges: () => {
+					const state = get()
+					set({
+						categorizedPlayers: { ...state.tempCategorizedPlayers },
+						isEditingPositions: false,
+						selectedPlayers: [],
+						tempCategorizedPlayers: {} as CategorizedPlayers,
+					})
+				},
+
+				completeInitialStep: () => {
+					set({ hasCompletedInitialStep: true })
+				},
+			}),
 			{
 				name: 'game-storage',
 				partialize: state => ({
@@ -464,6 +489,7 @@ export const useGameStore = create<GameState>()(
 					isEditingPositions: state.isEditingPositions,
 					selectedPlayers: state.selectedPlayers,
 					tempCategorizedPlayers: state.tempCategorizedPlayers,
+					hasCompletedInitialStep: state.hasCompletedInitialStep,
 				}),
 			}
 		),
