@@ -6,12 +6,14 @@ import {
 } from '../api/statisticsService'
 import { LoadingSpinner } from '../components'
 import { useTelegram } from '../hooks/useTelegram'
+import { useUserStore } from '../store'
 import { getProxyImageUrl } from '../utils/imageUtils'
 
 const PlayerRatingsPage = () => {
 	const { clubId } = useParams<{ clubId: string }>()
 	const navigate = useNavigate()
 	const { initData } = useTelegram()
+	const { isAdmin } = useUserStore()
 	const [ratings, setRatings] = useState<ClubRatingsResponse | null>(null)
 	const [isLoading, setIsLoading] = useState(true)
 	const [error, setError] = useState<string | null>(null)
@@ -70,9 +72,9 @@ const PlayerRatingsPage = () => {
 							background: 'var(--tg-theme-button-color)',
 							color: 'var(--tg-theme-button-text-color)',
 						}}
-						onClick={() => navigate('/admin')}
+						onClick={() => navigate(isAdmin ? '/admin' : '/results')}
 					>
-						Вернуться в админ панель
+						{isAdmin ? 'Вернуться в админ панель' : 'Вернуться к результатам'}
 					</button>
 				</div>
 			</div>
@@ -102,9 +104,9 @@ const PlayerRatingsPage = () => {
 							background: 'var(--tg-theme-button-color)',
 							color: 'var(--tg-theme-button-text-color)',
 						}}
-						onClick={() => navigate('/admin')}
+						onClick={() => navigate(isAdmin ? '/admin' : '/results')}
 					>
-						Вернуться в админ панель
+						{isAdmin ? 'Вернуться в админ панель' : 'Вернуться к результатам'}
 					</button>
 				</div>
 			</div>
@@ -121,9 +123,9 @@ const PlayerRatingsPage = () => {
 		>
 			<div className='max-w-4xl mx-auto'>
 				{/* Заголовок */}
-				<div className='flex items-center justify-between mb-6'>
+				<div className='flex items-center justify-around mb-6'>
 					<button
-						onClick={() => navigate('/admin')}
+						onClick={() => navigate(isAdmin ? '/admin' : '/results')}
 						className='px-4 py-2 rounded-lg font-medium transition-opacity hover:opacity-80'
 						style={{
 							background: 'var(--tg-theme-button-color)',
