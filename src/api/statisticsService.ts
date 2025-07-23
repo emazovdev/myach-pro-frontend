@@ -33,7 +33,7 @@ export const saveGameResults = async (
 ): Promise<void> => {
 	try {
 		const response = await fetch(
-			`${API_BASE_URL}/api/statistics/game-results`,
+			`${API_BASE_URL}/statistics/game-results`,
 			{
 				method: 'POST',
 				headers: {
@@ -66,16 +66,13 @@ export const getPlayerRatings = async (
 	clubId: string
 ): Promise<ClubRatingsResponse> => {
 	try {
-		const response = await fetch(
-			`${API_BASE_URL}/api/statistics/ratings/${clubId}`,
-			{
-				method: 'GET',
-				headers: {
-					'Content-Type': 'application/json',
-					Authorization: `tma ${initData}`,
-				},
-			}
-		)
+		const response = await fetch(`${API_BASE_URL}/api/atings/${clubId}`, {
+			method: 'GET',
+			headers: {
+				'Content-Type': 'application/json',
+				Authorization: `tma ${initData}`,
+			},
+		})
 
 		if (!response.ok) {
 			throw new Error(`HTTP error! status: ${response.status}`)
