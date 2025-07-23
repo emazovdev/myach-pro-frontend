@@ -1,13 +1,16 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { fetchClubs } from '../api'
+import { completeGameSession } from '../api/analyticsService'
 import { LoadingSpinner } from '../components'
 import { useTelegram } from '../hooks/useTelegram'
+import { useUserStore } from '../store'
 import type { Club } from '../types'
 
 const SelectTeamPage = () => {
 	const navigate = useNavigate()
-	const { initData } = useTelegram()
+	const { initData, onClose } = useTelegram()
+	const { isAdmin, clearUserData } = useUserStore()
 
 	const [clubs, setClubs] = useState<Club[]>([])
 	const [isLoading, setIsLoading] = useState(true)
@@ -44,6 +47,34 @@ const SelectTeamPage = () => {
 		})
 	}
 
+	const handleExit = async () => {
+		if (isAdmin) {
+			// Для админа возвращаемся в админ панель
+			navigate('/admin')
+		} else {
+			// Для обычного пользователя завершаем сессию и отключаем бота
+			try {
+				if (initData) {
+					// Завершаем игровую сессию если она была активна
+					await completeGameSession(initData).catch(error => {
+						console.error('Ошибка при завершении сессии:', error)
+						// Не блокируем выход при ошибке аналитики
+					})
+				}
+
+				// Очищаем данные пользователя
+				clearUserData()
+
+				// Закрываем Telegram WebApp
+				onClose()
+			} catch (error) {
+				console.error('Ошибка при выходе:', error)
+				// В случае ошибки все равно пытаемся закрыть бота
+				onClose()
+			}
+		}
+	}
+
 	if (isLoading) {
 		return <LoadingSpinner fullScreen message='Загрузка команд...' />
 	}
@@ -61,14 +92,14 @@ const SelectTeamPage = () => {
 					{error || 'Команды не найдены'}
 				</div>
 				<button
-					onClick={() => navigate('/')}
+					onClick={handleExit}
 					className='py-3 px-6 rounded-lg transition-opacity hover:opacity-80'
 					style={{
 						background: 'var(--tg-theme-button-color)',
 						color: 'var(--tg-theme-button-text-color)',
 					}}
 				>
-					Назад
+					Выход
 				</button>
 			</div>
 		)
@@ -83,15 +114,15 @@ const SelectTeamPage = () => {
 			}}
 		>
 			<div className='max-w-4xl mx-auto'>
-				{/* Заголовок с кнопкой назад */}
+				{/* Заголовок с кнопкой выхода */}
 				<div className='flex items-center justify-between mb-8'>
 					<div className='flex items-center gap-4'>
 						<button
-							onClick={() => navigate('/')}
+							onClick={handleExit}
 							className='text-lg transition-opacity hover:opacity-70'
 							style={{ color: 'var(--tg-theme-link-color)' }}
 						>
-							← Назад
+							← Выход
 						</button>
 						<h1 className='text-2xl font-bold'>Выберите команду</h1>
 					</div>
