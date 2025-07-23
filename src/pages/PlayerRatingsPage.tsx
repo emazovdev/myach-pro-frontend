@@ -122,10 +122,6 @@ const PlayerRatingsPage = () => {
 			<div className='max-w-4xl mx-auto'>
 				{/* Заголовок */}
 				<div className='flex items-center justify-between mb-6'>
-					<div>
-						<h1 className='text-2xl font-bold'>Рейтинги игроков</h1>
-						<p className='text-lg opacity-80'>{ratings.club.name}</p>
-					</div>
 					<button
 						onClick={() => navigate('/admin')}
 						className='px-4 py-2 rounded-lg font-medium transition-opacity hover:opacity-80'
@@ -136,6 +132,11 @@ const PlayerRatingsPage = () => {
 					>
 						← Назад
 					</button>
+
+					<div>
+						<h1 className='text-2xl font-bold'>Рейтинги игроков</h1>
+						<p className='text-lg opacity-80'>{ratings.club.name}</p>
+					</div>
 				</div>
 
 				{/* Рейтинги по категориям */}
@@ -203,9 +204,6 @@ const PlayerRatingsPage = () => {
 													<div className='font-bold text-lg text-gray-900'>
 														{rating.hitPercentage.toFixed(1)}%
 													</div>
-													<div className='text-sm text-gray-500'>
-														{rating.categoryHits} из {rating.totalGames} игр
-													</div>
 												</div>
 											</div>
 										))}
@@ -217,7 +215,7 @@ const PlayerRatingsPage = () => {
 				</div>
 
 				{/* Информация о рейтингах */}
-				<div className='mt-8 p-4 bg-blue-50 rounded-lg'>
+				{/* <div className='mt-8 p-4 bg-blue-50 rounded-lg'>
 					<h3 className='font-bold text-blue-900 mb-2'>
 						Как работают рейтинги:
 					</h3>
@@ -228,7 +226,7 @@ const PlayerRatingsPage = () => {
 						<li>• Данные обновляются после каждой завершенной игры</li>
 						<li>• Рейтинг сортируется по проценту попадания в категорию</li>
 					</ul>
-				</div>
+				</div> */}
 			</div>
 		</div>
 	)
