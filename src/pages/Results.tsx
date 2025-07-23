@@ -67,6 +67,7 @@ const Results = () => {
 		null
 	)
 	// const [isLoadingStats, setIsLoadingStats] = useState(false);
+	const [hasCompletedInitialStep, setHasCompletedInitialStep] = useState(false)
 
 	// Проверяем, есть ли данные игры
 	const hasGameData =
@@ -109,35 +110,6 @@ const Results = () => {
 					setClub(clubs[0])
 				} else {
 					setError('Не удалось загрузить информацию о клубе')
-				}
-
-				// Логируем завершение игры при заходе на страницу результатов
-				if (hasGameData) {
-					completeGameSession(initData).catch(error => {
-						console.error('Ошибка при логировании завершения игры:', error)
-					})
-
-					// Сохраняем результаты игры для статистики
-					if (club) {
-						const categorizedPlayerIds: { [categoryName: string]: string[] } =
-							{}
-						Object.entries(categorizedPlayers).forEach(
-							([categoryName, players]) => {
-								categorizedPlayerIds[categoryName] = players.map(
-									player => player.id
-								)
-							}
-						)
-
-						const gameResult: GameResult = {
-							categorizedPlayerIds,
-							clubId: club.id,
-						}
-
-						saveGameResults(initData, gameResult).catch((error: any) => {
-							console.error('Ошибка при сохранении результатов игры:', error)
-						})
-					}
 				}
 			} catch (err) {
 				console.error('Ошибка при загрузке данных о клубе:', err)
@@ -399,6 +371,39 @@ const Results = () => {
 		}
 	}
 
+	// Функция для обработки клика на кнопку "Продолжить"
+	const handleContinue = async () => {
+		if (!initData || !club || !hasGameData) {
+			console.error('Недостаточно данных для сохранения статистики')
+			return
+		}
+
+		try {
+			// Логируем завершение игры
+			await completeGameSession(initData)
+
+			// Сохраняем результаты игры для статистики
+			const categorizedPlayerIds: { [categoryName: string]: string[] } = {}
+			Object.entries(categorizedPlayers).forEach(([categoryName, players]) => {
+				categorizedPlayerIds[categoryName] = players.map(player => player.id)
+			})
+
+			const gameResult: GameResult = {
+				categorizedPlayerIds,
+				clubId: club.id,
+			}
+
+			await saveGameResults(initData, gameResult)
+
+			// Переходим к следующему этапу
+			setHasCompletedInitialStep(true)
+		} catch (error) {
+			console.error('Ошибка при сохранении статистики:', error)
+			// Все равно переходим к следующему этапу, даже если статистика не сохранилась
+			setHasCompletedInitialStep(true)
+		}
+	}
+
 	// Обработчики для режима редактирования позиций
 	const handleEnterEditMode = () => {
 		enterEditMode()
@@ -603,9 +608,26 @@ const Results = () => {
 									Отменить
 								</button>
 							</>
+						) : !hasCompletedInitialStep ? (
+							<>
+								{/* Начальное состояние */}
+								<button
+									className='bg-[#EC3381] text-white font-bold py-3 px-8 rounded-lg text-lg w-fit transition-colors'
+									onClick={handleEnterEditMode}
+								>
+									Поменять местами
+								</button>
+
+								<button
+									className='bg-[#FFEC13] text-black font-bold py-3 px-8 rounded-lg text-lg w-fit transition-colors'
+									onClick={handleContinue}
+								>
+									Продолжить
+								</button>
+							</>
 						) : (
 							<>
-								{/* Обычный режим */}
+								{/* Завершенное состояние */}
 								<button
 									className={`font-bold py-3 px-8 rounded-lg text-lg w-fit disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 ${
 										hasSharedInSession
@@ -639,16 +661,6 @@ const Results = () => {
 										? 'Поделиться'
 										: 'Отправить в чат'}
 								</button>
-
-								{!hasSharedInSession && (
-									<button
-										className='bg-[#EC3381] text-white font-bold py-3 px-8 rounded-lg text-lg w-fit transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
-										onClick={handleEnterEditMode}
-										disabled={isSharing}
-									>
-										Поменять позиции
-									</button>
-								)}
 
 								<Link
 									to='/select-team'
