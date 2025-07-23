@@ -663,18 +663,6 @@ const Results = () => {
 								</button>
 
 								{/* Кнопка для просмотра рейтинга */}
-								{club && (
-									<Link
-										to={`/admin/ratings/${club.id}`}
-										className={`inline-block bg-[#28A745] text-white font-bold py-3 px-8 rounded-lg text-lg w-fit ${
-											isSharing
-												? 'opacity-50 cursor-not-allowed pointer-events-none'
-												: ''
-										}`}
-									>
-										Посмотреть рейтинг
-									</Link>
-								)}
 
 								<Link
 									to='/select-team'
@@ -705,16 +693,30 @@ const Results = () => {
 								)}
 
 								{isAdmin && (
-									<Link
-										to='/admin'
-										className={`inline-block bg-[#FFEC13] text-black font-bold py-3 px-8 rounded-lg text-lg w-fit ${
-											isSharing
-												? 'opacity-50 cursor-not-allowed pointer-events-none'
-												: ''
-										}`}
-									>
-										Админ
-									</Link>
+									<>
+										{club && (
+											<Link
+												to={`/admin/ratings/${club.id}`}
+												className={`inline-block bg-[#28A745] text-white font-bold py-3 px-8 rounded-lg text-lg w-fit ${
+													isSharing
+														? 'opacity-50 cursor-not-allowed pointer-events-none'
+														: ''
+												}`}
+											>
+												Посмотреть рейтинг
+											</Link>
+										)}
+										<Link
+											to='/admin'
+											className={`inline-block bg-[#FFEC13] text-black font-bold py-3 px-8 rounded-lg text-lg w-fit ${
+												isSharing
+													? 'opacity-50 cursor-not-allowed pointer-events-none'
+													: ''
+											}`}
+										>
+											Админ
+										</Link>
+									</>
 								)}
 							</>
 						)}
