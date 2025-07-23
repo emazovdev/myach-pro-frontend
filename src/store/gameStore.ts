@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { devtools, persist } from 'zustand/middleware'
 import { fetchPlayersByClub } from '../api'
-import { LOCAL_CATEGORIES } from '../config/categories'
+import { getCategories } from '../config/categories'
 import type { CategorizedPlayers, Category, Player } from '../types'
 
 type AddPlayerResult =
@@ -44,6 +44,7 @@ interface GameState {
 	isLoading: boolean
 	error: string | null
 	maxPlayersToProcess: number
+	playerCount: number // Добавляем поле для количества игроков
 
 	// Расширенная история для возврата к любому состоянию
 	gameHistory: GameHistoryAction[]
@@ -93,6 +94,7 @@ const initialState = {
 	isLoading: false,
 	error: null,
 	maxPlayersToProcess: 0,
+	playerCount: 0, // Добавляем в начальное состояние
 	gameHistory: [],
 	canGoBack: false,
 	isEditingPositions: false,
@@ -249,14 +251,19 @@ export const useGameStore = create<GameState>()(
 				},
 
 				resetGame: () => {
+					const state = get()
+					// Используем сохраненное количество игроков для определения категорий
+					const categoriesForReset = getCategories(state.playerCount)
+
 					set({
 						...initialState,
-						categories: LOCAL_CATEGORIES,
+						categories: categoriesForReset,
 						categorizedPlayers: Object.fromEntries(
-							LOCAL_CATEGORIES.map(cat => [cat.name, []])
+							categoriesForReset.map(cat => [cat.name, []])
 						),
 						gameHistory: [],
 						canGoBack: false,
+						playerCount: state.playerCount, // Сохраняем количество игроков
 					})
 				},
 
@@ -264,16 +271,19 @@ export const useGameStore = create<GameState>()(
 					set({ isLoading: true, error: null })
 
 					try {
-						// Используем локальные категории и загружаем игроков с сервера
+						// Загружаем игроков с сервера
 						const players = await fetchPlayersByClub(initData, clubId)
+
+						// Определяем категории в зависимости от количества игроков
+						const categoriesForGame = getCategories(players.length)
 
 						// Создаем начальное состояние категорий
 						const emptyCategorizedPlayers = Object.fromEntries(
-							LOCAL_CATEGORIES.map(cat => [cat.name, []])
+							categoriesForGame.map(cat => [cat.name, []])
 						)
 
 						set({
-							categories: LOCAL_CATEGORIES,
+							categories: categoriesForGame,
 							playerQueue: players,
 							categorizedPlayers: emptyCategorizedPlayers,
 							currentPlayerIndex: 0,
@@ -284,6 +294,7 @@ export const useGameStore = create<GameState>()(
 							gameHistory: [],
 							canGoBack: false,
 							hasCompletedInitialStep: false,
+							playerCount: players.length, // Сохраняем количество игроков
 						})
 					} catch (error) {
 						console.error('Ошибка при инициализации игры:', error)
@@ -490,6 +501,7 @@ export const useGameStore = create<GameState>()(
 					selectedPlayers: state.selectedPlayers,
 					tempCategorizedPlayers: state.tempCategorizedPlayers,
 					hasCompletedInitialStep: state.hasCompletedInitialStep,
+					playerCount: state.playerCount, // Добавляем playerCount для сохранения
 				}),
 			}
 		),

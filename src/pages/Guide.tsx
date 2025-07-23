@@ -1,61 +1,58 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useTelegram } from '../hooks/useTelegram';
-import { useUserStore } from '../store';
-import { navigateToGame } from '../utils/navigation';
-import { fetchClubs } from '../api';
+import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { fetchClubs } from '../api'
+import { STANDARD_CATEGORIES } from '../config/categories'
+import { useTelegram } from '../hooks/useTelegram'
+import { useUserStore } from '../store'
+import { navigateToGame } from '../utils/navigation'
 
-const players = Array.from({ length: 20 }, (_, i) => i + 1);
+const players = Array.from({ length: 20 }, (_, i) => i + 1)
 
-const categories = [
-	{ name: 'goat', color: '#0EA94B', slots: 2 },
-	{ name: 'Хорош', color: '#94CC7A', slots: 6 },
-	{ name: 'норм', color: '#E6A324', slots: 6 },
-	{ name: 'Бездарь', color: '#E13826', slots: 6 },
-];
+// Используем стандартные категории из конфига
+const categories = STANDARD_CATEGORIES
 
 const Guide = () => {
-	const [isLoading, setIsLoading] = useState(false);
-	const [showNoClubsMessage, setShowNoClubsMessage] = useState(false);
-	const navigate = useNavigate();
-	const { initData } = useTelegram();
-	const { isAdmin } = useUserStore();
+	const [isLoading, setIsLoading] = useState(false)
+	const [showNoClubsMessage, setShowNoClubsMessage] = useState(false)
+	const navigate = useNavigate()
+	const { initData } = useTelegram()
+	const { isAdmin } = useUserStore()
 
 	const handleStartGame = async () => {
 		if (!initData) {
-			console.error('Данные Telegram не найдены');
-			return;
+			console.error('Данные Telegram не найдены')
+			return
 		}
 
-		setIsLoading(true);
+		setIsLoading(true)
 		try {
 			// Проверяем наличие команд перед переходом к игре
-			const clubs = await fetchClubs(initData);
+			const clubs = await fetchClubs(initData)
 
 			if (clubs.length === 0) {
 				// Показываем сообщение об отсутствии команд
-				setShowNoClubsMessage(true);
-				return;
+				setShowNoClubsMessage(true)
+				return
 			}
 
 			// Если команды есть, переходим к игре
-			await navigateToGame(initData, navigate);
+			await navigateToGame(initData, navigate)
 		} catch (error) {
-			console.error('Ошибка при загрузке команд:', error);
+			console.error('Ошибка при загрузке команд:', error)
 			// Показываем общее сообщение об ошибке
-			setShowNoClubsMessage(true);
+			setShowNoClubsMessage(true)
 		} finally {
-			setIsLoading(false);
+			setIsLoading(false)
 		}
-	};
+	}
 
 	const handleGoToAdmin = () => {
-		navigate('/admin');
-	};
+		navigate('/admin')
+	}
 
 	const handleCreateFirstClub = () => {
-		navigate('/admin/add-club');
-	};
+		navigate('/admin/add-club')
+	}
 
 	return (
 		<div className='container flex flex-col justify-around h-full'>
@@ -64,7 +61,7 @@ const Guide = () => {
 					В игре 20 клубов
 				</h2>
 				<div className='player_list grid grid-cols-10 gap-1'>
-					{players.map((num) => (
+					{players.map(num => (
 						<div
 							className='player_item flex items-center justify-center text-[clamp(1.5rem,4vw,2.5rem)] font-bold rounded-lg'
 							style={{
@@ -83,7 +80,7 @@ const Guide = () => {
 					Распределить их по категориям
 				</h2>
 				<ul className='category_list text-center flex flex-col gap-2'>
-					{categories.map((category) => (
+					{categories.map(category => (
 						<li
 							key={`category-${category.name}`}
 							className='category_item text-[clamp(1.5rem,4vw,2rem)] font-bold rounded-lg text-white uppercase py-[clamp(0.5rem,1.5vh,1.5rem)]'
@@ -141,7 +138,7 @@ const Guide = () => {
 							background: 'var(--tg-theme-bg-color)',
 							color: 'var(--tg-theme-text-color)',
 						}}
-						onClick={(e) => e.stopPropagation()}
+						onClick={e => e.stopPropagation()}
 					>
 						<h3 className='text-xl font-bold mb-4 text-center'>
 							Команды не найдены
@@ -183,7 +180,7 @@ const Guide = () => {
 				</div>
 			)}
 		</div>
-	);
-};
+	)
+}
 
-export default Guide;
+export default Guide

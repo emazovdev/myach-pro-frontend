@@ -40,13 +40,14 @@ const PlayerRatingsPage = () => {
 		loadRatings()
 	}, [initData, clubId])
 
-	// Категории в нужном порядке
-	const categoryOrder = ['goat', 'Хорош', 'норм', 'Бездарь']
+	// Категории в нужном порядке (поддерживаем и старые и новые)
+	const categoryOrder = ['goat', 'Хорош', 'норм', 'Бездарь', 'Бездна']
 	const categoryColors: { [key: string]: string } = {
 		goat: '#0EA94B',
 		Хорош: '#94CC7A',
 		норм: '#E6A324',
 		Бездарь: '#E13826',
+		Бездна: '#E13826', // Тот же цвет что и у "Бездарь"
 	}
 
 	if (isLoading) {
