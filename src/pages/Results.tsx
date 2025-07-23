@@ -10,6 +10,7 @@ import {
 	type ShareData,
 	type UserShareStats,
 } from '../api/shareService'
+import { saveGameResults, type GameResult } from '../api/statisticsService'
 import { CategoryItem, LoadingSpinner, ShareTestPanel } from '../components'
 import { TELEGRAM_BOT_USERNAME } from '../config/api'
 import { useTelegram } from '../hooks/useTelegram'
@@ -115,6 +116,28 @@ const Results = () => {
 					completeGameSession(initData).catch(error => {
 						console.error('Ошибка при логировании завершения игры:', error)
 					})
+
+					// Сохраняем результаты игры для статистики
+					if (club) {
+						const categorizedPlayerIds: { [categoryName: string]: string[] } =
+							{}
+						Object.entries(categorizedPlayers).forEach(
+							([categoryName, players]) => {
+								categorizedPlayerIds[categoryName] = players.map(
+									player => player.id
+								)
+							}
+						)
+
+						const gameResult: GameResult = {
+							categorizedPlayerIds,
+							clubId: club.id,
+						}
+
+						saveGameResults(initData, gameResult).catch((error: any) => {
+							console.error('Ошибка при сохранении результатов игры:', error)
+						})
+					}
 				}
 			} catch (err) {
 				console.error('Ошибка при загрузке данных о клубе:', err)
@@ -616,7 +639,7 @@ const Results = () => {
 										? 'Поделиться'
 										: 'Отправить в чат'}
 								</button>
-								
+
 								{!hasSharedInSession && (
 									<button
 										className='bg-[#EC3381] text-white font-bold py-3 px-8 rounded-lg text-lg w-fit transition-colors disabled:opacity-50 disabled:cursor-not-allowed'

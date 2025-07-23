@@ -1,114 +1,119 @@
-import { useEffect, Suspense, lazy } from 'react';
-import { useTelegram } from './hooks/useTelegram';
-import { useUserStore } from './store';
-import { Routes, Route } from 'react-router-dom';
-import { ErrorBoundary, LoadingSpinner } from './components';
+import { SpeedInsights } from '@vercel/speed-insights/react'
+import { Suspense, lazy, useEffect } from 'react'
+import { Route, Routes } from 'react-router-dom'
+import { ErrorBoundary, LoadingSpinner } from './components'
+import { useTelegram } from './hooks/useTelegram'
+import { useUserStore } from './store'
 
 // Lazy loading для страниц с улучшенной обработкой ошибок
 const StartPage = lazy(() =>
 	import('./pages/StartPage').catch(() => ({
 		default: () => <div>Ошибка загрузки стартовой страницы</div>,
-	})),
-);
+	}))
+)
 const Guide = lazy(() =>
 	import('./pages/Guide').catch(() => ({
 		default: () => <div>Ошибка загрузки руководства</div>,
-	})),
-);
+	}))
+)
 const SelectTeamPage = lazy(() =>
 	import('./pages/SelectTeamPage').catch(() => ({
 		default: () => <div>Ошибка загрузки страницы выбора команды</div>,
-	})),
-);
+	}))
+)
 const Game = lazy(() =>
 	import('./pages/Game').catch(() => ({
 		default: () => <div>Ошибка загрузки игры</div>,
-	})),
-);
+	}))
+)
 const Results = lazy(() =>
 	import('./pages/Results').catch(() => ({
 		default: () => <div>Ошибка загрузки результатов</div>,
-	})),
-);
+	}))
+)
 
 // Админские страницы тоже делаем lazy с обработкой ошибок
 const AdminPage = lazy(() =>
 	import('./pages/AdminPage').catch(() => ({
 		default: () => <div>Ошибка загрузки админки</div>,
-	})),
-);
+	}))
+)
 const AddClubPage = lazy(() =>
 	import('./pages/AddClubPage').catch(() => ({
 		default: () => <div>Ошибка загрузки страницы добавления клуба</div>,
-	})),
-);
+	}))
+)
 const AddPlayersPage = lazy(() =>
 	import('./pages/AddPlayersPage').catch(() => ({
 		default: () => <div>Ошибка загрузки страницы добавления игроков</div>,
-	})),
-);
+	}))
+)
 const ManageClubPage = lazy(() =>
 	import('./pages/ManageClubPage').catch(() => ({
 		default: () => <div>Ошибка загрузки управления клубом</div>,
-	})),
-);
+	}))
+)
 const EditClubPage = lazy(() =>
 	import('./pages/EditClubPage').catch(() => ({
 		default: () => <div>Ошибка загрузки редактирования клуба</div>,
-	})),
-);
+	}))
+)
 const EditPlayersPage = lazy(() =>
 	import('./pages/EditPlayersPage').catch(() => ({
 		default: () => <div>Ошибка загрузки редактирования игроков</div>,
-	})),
-);
+	}))
+)
 const ManageAdminsPage = lazy(() =>
 	import('./pages/ManageAdminsPage').catch(() => ({
 		default: () => <div>Ошибка загрузки управления админами</div>,
-	})),
-);
+	}))
+)
 const AnalyticsPage = lazy(() =>
 	import('./pages/AnalyticsPage').catch(() => ({
 		default: () => <div>Ошибка загрузки аналитики</div>,
-	})),
-);
-import { SpeedInsights } from '@vercel/speed-insights/react';
+	}))
+)
+const PlayerRatingsPage = lazy(() =>
+	import('./pages/PlayerRatingsPage').catch(() => ({
+		default: () => <div>Ошибка загрузки рейтингов</div>,
+	}))
+)
 
 function App() {
-	const { tg, initData, isDevelopment } = useTelegram();
-	const { authenticateUser } = useUserStore();
+	const { tg, initData, isDevelopment } = useTelegram()
+	const { authenticateUser } = useUserStore()
 
 	useEffect(() => {
 		// Проверяем, что Telegram WebApp доступен
 		if (!tg) {
 			if (isDevelopment) {
-				console.log('Telegram WebApp недоступен - режим разработки');
+				console.log('Telegram WebApp недоступен - режим разработки')
 			}
-			return;
+			return
 		}
 
 		// Безопасная инициализация Telegram WebApp
 		try {
-			tg.ready();
-			tg.expand();
+			tg.ready()
+			tg.expand()
 		} catch (error) {
-			console.error('Ошибка инициализации Telegram WebApp:', error);
+			console.error('Ошибка инициализации Telegram WebApp:', error)
 		}
 
 		// Аутентификация только если есть initData
 		if (initData) {
-			authenticateUser(initData).catch((error) => {
-				console.error('Ошибка при аутентификации:', error);
+			authenticateUser(initData).catch(error => {
+				console.error('Ошибка при аутентификации:', error)
 				// TODO: Показать пользователю уведомление об ошибке
 				// Можно добавить toast notification или modal
-			});
+			})
 		}
 
 		// Логируем initData только в development
 		if (isDevelopment && initData) {
-			console.log('initData:', initData);
+			console.log('initData:', initData)
 		}
-	}, [tg, initData, authenticateUser, isDevelopment]);
+	}, [tg, initData, authenticateUser, isDevelopment])
 
 	return (
 		<ErrorBoundary>
@@ -138,13 +143,17 @@ function App() {
 						/>
 						<Route path='/admin/manage-admins' element={<ManageAdminsPage />} />
 						<Route path='/admin/analytics' element={<AnalyticsPage />} />
+						<Route
+							path='/admin/ratings/:clubId'
+							element={<PlayerRatingsPage />}
+						/>
 					</Routes>
 				</Suspense>
 
 				<SpeedInsights />
 			</div>
 		</ErrorBoundary>
-	);
+	)
 }
 
-export default App;
+export default App
