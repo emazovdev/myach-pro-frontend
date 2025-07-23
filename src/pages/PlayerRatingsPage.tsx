@@ -150,6 +150,16 @@ const PlayerRatingsPage = () => {
 							return null // Не показываем категории без данных
 						}
 
+						// Фильтруем игроков с процентом больше 0
+						const playersWithStats = categoryRatings.filter(
+							rating => rating.hitPercentage > 0
+						)
+
+						// Не показываем категорию если нет игроков с попаданиями
+						if (playersWithStats.length === 0) {
+							return null
+						}
+
 						return (
 							<div
 								key={categoryName}
@@ -166,51 +176,49 @@ const PlayerRatingsPage = () => {
 								{/* Список игроков */}
 								<div className='p-4'>
 									<div className='space-y-3'>
-										{categoryRatings
-											.filter(rating => rating.hitPercentage > 0)
-											.map((rating, index) => (
-												<div
-													key={rating.playerId}
-													className='flex items-center justify-between p-3 bg-gray-50 rounded-lg'
-												>
-													<div className='flex items-center gap-3'>
-														{/* Позиция */}
-														<div
-															className='w-8 h-8 rounded-full flex items-center justify-center font-bold text-white'
-															style={{
-																backgroundColor: categoryColors[categoryName],
-															}}
-														>
-															{index + 1}
-														</div>
-
-														{/* Аватар игрока */}
-														{rating.playerAvatar && (
-															<img
-																src={getProxyImageUrl(rating.playerAvatar)}
-																alt={rating.playerName}
-																className='w-10 h-10 rounded-full object-cover'
-																onError={e => {
-																	const target = e.target as HTMLImageElement
-																	target.style.display = 'none'
-																}}
-															/>
-														)}
-
-														{/* Имя игрока */}
-														<span className='font-medium text-gray-900'>
-															{rating.playerName}
-														</span>
+										{playersWithStats.map((rating, index) => (
+											<div
+												key={rating.playerId}
+												className='flex items-center justify-between p-3 bg-gray-50 rounded-lg'
+											>
+												<div className='flex items-center gap-3'>
+													{/* Позиция */}
+													<div
+														className='w-8 h-8 rounded-full flex items-center justify-center font-bold text-white'
+														style={{
+															backgroundColor: categoryColors[categoryName],
+														}}
+													>
+														{index + 1}
 													</div>
 
-													{/* Статистика */}
-													<div className='text-right'>
-														<div className='font-bold text-lg text-gray-900'>
-															{rating.hitPercentage.toFixed(1)}%
-														</div>
+													{/* Аватар игрока */}
+													{rating.playerAvatar && (
+														<img
+															src={getProxyImageUrl(rating.playerAvatar)}
+															alt={rating.playerName}
+															className='w-10 h-10 rounded-full object-cover'
+															onError={e => {
+																const target = e.target as HTMLImageElement
+																target.style.display = 'none'
+															}}
+														/>
+													)}
+
+													{/* Имя игрока */}
+													<span className='font-medium text-gray-900'>
+														{rating.playerName}
+													</span>
+												</div>
+
+												{/* Статистика */}
+												<div className='text-right'>
+													<div className='font-bold text-lg text-gray-900'>
+														{rating.hitPercentage.toFixed(1)}%
 													</div>
 												</div>
-											))}
+											</div>
+										))}
 									</div>
 								</div>
 							</div>
