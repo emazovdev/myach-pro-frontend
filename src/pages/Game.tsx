@@ -1,17 +1,17 @@
-import React, { useMemo } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { useGameStore, useModalStore } from '../store';
-import { Modal, CategoryItem, LoadingSpinner } from '../components';
-import { useTelegram } from '../hooks/useTelegram';
-import { startGameSession } from '../api/analyticsService';
-import { securityUtils } from '../utils/securityUtils';
+import React, { useMemo } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
+import { startGameSession } from '../api/analyticsService'
+import { CategoryItem, LoadingSpinner, Modal } from '../components'
+import { useTelegram } from '../hooks/useTelegram'
+import { useGameStore, useModalStore } from '../store'
+import { securityUtils } from '../utils/securityUtils'
 
 const Game = () => {
-	const navigate = useNavigate();
-	const location = useLocation();
-	const { initData } = useTelegram();
-	const [club, setClub] = React.useState<any>(null);
-	const [loadingClub, setLoadingClub] = React.useState(true);
+	const navigate = useNavigate()
+	const location = useLocation()
+	const { initData } = useTelegram()
+	const [club, setClub] = React.useState<any>(null)
+	const [loadingClub, setLoadingClub] = React.useState(true)
 
 	// Zustand stores
 	const {
@@ -28,7 +28,7 @@ const Game = () => {
 		maxPlayersToProcess,
 		canGoBack,
 		goBackToPreviousPlayer,
-	} = useGameStore();
+	} = useGameStore()
 
 	const {
 		isOpen,
@@ -39,122 +39,122 @@ const Game = () => {
 		showMessageModal,
 		showReplacePlayerModal,
 		closeModal,
-	} = useModalStore();
+	} = useModalStore()
 
 	// Добавляем мемоизацию для оптимизации производительности
-	const memoizedCategories = useMemo(() => categories, [categories]);
+	const memoizedCategories = useMemo(() => categories, [categories])
 
 	// Загрузка клуба и инициализация игры при загрузке компонента
 	React.useEffect(() => {
 		const loadData = async () => {
 			if (!initData) {
-				showMessageModal('Данные Telegram не найдены');
-				setLoadingClub(false);
-				return;
+				showMessageModal('Данные Telegram не найдены')
+				setLoadingClub(false)
+				return
 			}
 
 			// Получаем выбранную команду из navigation state
-			const selectedClub = location.state?.selectedClub;
+			const selectedClub = location.state?.selectedClub
 			if (!selectedClub) {
 				// Добавляем небольшую задержку, чтобы дать время для навигации
 				setTimeout(() => {
 					if (!location.state?.selectedClub) {
-						showMessageModal('Команда не выбрана');
-						navigate('/select-team');
+						showMessageModal('Команда не выбрана')
+						navigate('/select-team')
 					}
-				}, 100);
-				setLoadingClub(false);
-				return;
+				}, 100)
+				setLoadingClub(false)
+				return
 			}
 
 			try {
 				// Устанавливаем команду
-				setClub(selectedClub);
+				setClub(selectedClub)
 
 				// Загружаем данные игры для выбранной команды
-				await initializeGame(initData, selectedClub.id);
+				await initializeGame(initData, selectedClub)
 
 				// Логируем начало игровой сессии
-				startGameSession(initData, selectedClub.id).catch((error) => {
-					console.error('Ошибка при логировании начала игры:', error);
-				});
+				startGameSession(initData, selectedClub.id).catch(error => {
+					console.error('Ошибка при логировании начала игры:', error)
+				})
 			} catch (err) {
-				console.error('Ошибка при загрузке данных:', err);
+				console.error('Ошибка при загрузке данных:', err)
 				showMessageModal(
-					'Ошибка при загрузке данных. Пожалуйста, обновите страницу.',
-				);
+					'Ошибка при загрузке данных. Пожалуйста, обновите страницу.'
+				)
 			} finally {
-				setLoadingClub(false);
+				setLoadingClub(false)
 			}
-		};
+		}
 
-		loadData();
-	}, [initializeGame, showMessageModal, initData, location.state, navigate]);
+		loadData()
+	}, [initializeGame, showMessageModal, initData, location.state, navigate])
 
 	// Улучшаем обработчик клика по категории
 	const handleCategoryClick = (categoryName: string) => {
 		try {
 			// Проверяем на бота
-			securityUtils.botDetection.track();
+			securityUtils.botDetection.track()
 
-			const result = addPlayerToCategory(categoryName);
+			const result = addPlayerToCategory(categoryName)
 
 			switch (result) {
 				case 'category_not_found':
-					showMessageModal('Категория не найдена!');
-					break;
+					showMessageModal('Категория не найдена!')
+					break
 				case 'category_full':
 					// Показываем модалку с заменой игроков
-					const categoryPlayers = categorizedPlayers[categoryName] || [];
-					showReplacePlayerModal(categoryName, categoryPlayers);
-					break;
+					const categoryPlayers = categorizedPlayers[categoryName] || []
+					showReplacePlayerModal(categoryName, categoryPlayers)
+					break
 				case 'player_not_found':
-					showMessageModal('Игрок не найден!');
-					break;
+					showMessageModal('Игрок не найден!')
+					break
 				case 'game_finished':
 					// Игра закончена - перенаправляем на страницу результатов
-					navigate('/results');
-					break;
+					navigate('/results')
+					break
 				case 'success':
 					// Игрок успешно добавлен, продолжаем игру
-					break;
+					break
 			}
 		} catch (error) {
-			showMessageModal((error as Error).message);
+			showMessageModal((error as Error).message)
 		}
-	};
+	}
 
 	// Обработчик замены игрока
 	const handleReplacePlayer = (playerToReplace: any) => {
 		if (categoryName) {
-			const result = replacePlayerInCategory(categoryName, playerToReplace);
+			const result = replacePlayerInCategory(categoryName, playerToReplace)
 
 			// Проверяем завершение игры после замены
 			if (result === 'game_finished') {
-				navigate('/results');
+				navigate('/results')
 			}
 		}
-	};
+	}
 
 	// Обработчик выбора другой категории
 	const handleChooseOtherCategory = () => {
 		// Просто закрываем модалку и позволяем выбрать другую категорию
-		closeModal();
-	};
+		closeModal()
+	}
 
 	// Обработчик возврата к предыдущему игроку
 	const handleGoBack = () => {
-		const success = goBackToPreviousPlayer();
+		const success = goBackToPreviousPlayer()
 		if (!success) {
-			showMessageModal('Не удалось вернуться к предыдущему игроку');
+			showMessageModal('Не удалось вернуться к предыдущему игроку')
 		}
-	};
+	}
 
-	const player = getCurrentPlayer();
+	const player = getCurrentPlayer()
 
 	// Показываем загрузку, если данные еще не получены
 	if (isLoading || loadingClub) {
-		return <LoadingSpinner fullScreen message='Загрузка игры...' />;
+		return <LoadingSpinner fullScreen message='Загрузка игры...' />
 	}
 
 	// Показываем ошибку, если что-то пошло не так
@@ -171,7 +171,7 @@ const Game = () => {
 					Обновить страницу
 				</button>
 			</div>
-		);
+		)
 	}
 
 	return (
@@ -249,7 +249,7 @@ const Game = () => {
 			</div>
 
 			<ul className='category_list text-center flex flex-col gap-2'>
-				{memoizedCategories.map((category) => (
+				{memoizedCategories.map(category => (
 					<CategoryItem
 						key={`category-${category.name}`}
 						category={category}
@@ -259,7 +259,7 @@ const Game = () => {
 				))}
 			</ul>
 		</div>
-	);
-};
+	)
+}
 
-export default Game;
+export default Game

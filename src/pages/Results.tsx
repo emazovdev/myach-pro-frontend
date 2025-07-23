@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
-import { fetchClubs } from '../api'
+import { Link, useNavigate } from 'react-router-dom'
 import { completeGameSession } from '../api/analyticsService'
 import {
 	downloadResultsImage,
@@ -43,9 +42,11 @@ const getDisplayClubName = (clubName: string): string => {
 const Results = () => {
 	const { initData } = useTelegram()
 	const { isAdmin } = useUserStore()
+	const navigate = useNavigate()
 	const {
 		categorizedPlayers,
 		categories,
+		selectedClub,
 		isEditingPositions,
 		selectedPlayers,
 		tempCategorizedPlayers,
@@ -56,8 +57,8 @@ const Results = () => {
 		swapSelectedPlayers,
 		savePositionChanges,
 		completeInitialStep,
+		resetGame,
 	} = useGameStore()
-	const [club, setClub] = useState<any>(null)
 	const [isLoading, setIsLoading] = useState(true)
 	const [error, setError] = useState<string | null>(null)
 	const [isSharing, setIsSharing] = useState(false)
@@ -98,30 +99,17 @@ const Results = () => {
 	}
 
 	useEffect(() => {
-		const loadClub = async () => {
-			if (!initData) {
-				setError('Данные Telegram не найдены')
-				setIsLoading(false)
-				return
-			}
-
-			try {
-				const clubs = await fetchClubs(initData)
-				if (clubs && clubs.length > 0) {
-					setClub(clubs[0])
-				} else {
-					setError('Не удалось загрузить информацию о клубе')
-				}
-			} catch (err) {
-				console.error('Ошибка при загрузке данных о клубе:', err)
-				setError('Ошибка при загрузке данных о клубе')
-			} finally {
-				setIsLoading(false)
-			}
+		// Проверяем наличие данных игры и клуба
+		if (hasGameData && selectedClub) {
+			setIsLoading(false)
+		} else if (!hasGameData) {
+			setError('Данные игры не найдены')
+			setIsLoading(false)
+		} else if (!selectedClub) {
+			setError('Информация о клубе не найдена')
+			setIsLoading(false)
 		}
-
-		loadClub()
-	}, [initData, hasGameData])
+	}, [hasGameData, selectedClub])
 
 	// Загружаем статистику лимитов пользователя
 	useEffect(() => {
@@ -191,7 +179,7 @@ const Results = () => {
 				return
 			}
 
-			if (!initData || !club || !hasGameData) {
+			if (!initData || !selectedClub || !hasGameData) {
 				setShareStatus('Недостаточно данных для создания изображения')
 				setTimeout(() => setShareStatus(''), 3000)
 				return
@@ -225,7 +213,7 @@ const Results = () => {
 			const shareData: ShareData = {
 				categorizedPlayerIds,
 				categories,
-				clubId: club.id,
+				clubId: selectedClub.id,
 			}
 
 			// Проверяем платформу для выбора метода шэринга
@@ -238,7 +226,7 @@ const Results = () => {
 				const shareOptions: ShareOptions = {
 					imageBlob: blob,
 					text: `Собери свой тир лист - @${TELEGRAM_BOT_USERNAME}`,
-					clubName: club.name,
+					clubName: selectedClub.name,
 				}
 
 				// Используем универсальную функцию шэринга для iOS
@@ -280,7 +268,6 @@ const Results = () => {
 								: null
 						)
 					}
-
 				} else {
 					setShareStatus(`❌ ${result.message || 'Не удалось отправить в чат'}`)
 				}
@@ -340,7 +327,7 @@ const Results = () => {
 	const getTestShareOptions = async (
 		testInitData: string
 	): Promise<ShareOptions> => {
-		if (!club || !hasGameData) {
+		if (!selectedClub || !hasGameData) {
 			throw new Error('Недостаточно данных для тестирования')
 		}
 
@@ -354,7 +341,7 @@ const Results = () => {
 		const shareData: ShareData = {
 			categorizedPlayerIds,
 			categories,
-			clubId: club.id,
+			clubId: selectedClub!.id,
 		}
 
 		// Получаем изображение для тестирования
@@ -363,13 +350,13 @@ const Results = () => {
 		return {
 			imageBlob: blob,
 			text: `Тест шэринга тир-листа - @${TELEGRAM_BOT_USERNAME}`,
-			clubName: club.name,
+			clubName: selectedClub!.name,
 		}
 	}
 
 	// Функция для обработки клика на кнопку "Продолжить"
 	const handleContinue = async () => {
-		if (!initData || !club || !hasGameData) {
+		if (!initData || !selectedClub || !hasGameData) {
 			console.error('Недостаточно данных для сохранения статистики')
 			return
 		}
@@ -386,7 +373,7 @@ const Results = () => {
 
 			const gameResult: GameResult = {
 				categorizedPlayerIds,
-				clubId: club.id,
+				clubId: selectedClub.id,
 			}
 
 			await saveGameResults(initData, gameResult)
@@ -425,6 +412,14 @@ const Results = () => {
 		savePositionChanges()
 	}
 
+	// Функция для начала новой игры
+	const handleStartNewGame = () => {
+		// Сбрасываем состояние игры
+		resetGame()
+		// Переходим к выбору команды
+		navigate('/select-team')
+	}
+
 	// Определяем какие данные показывать (в режиме редактирования - временные, иначе - обычные)
 	const displayData = isEditingPositions
 		? tempCategorizedPlayers
@@ -436,7 +431,7 @@ const Results = () => {
 	}
 
 	// Показываем ошибку, если что-то пошло не так
-	if (error || !club) {
+	if (error || !selectedClub) {
 		return (
 			<div
 				className='min-h-screen flex flex-col items-center justify-center p-4'
@@ -514,21 +509,24 @@ const Results = () => {
 					{/* Заголовок тир-листа и логотип */}
 					<div className='flex items-center justify-center gap-2 mb-6'>
 						<div className='flex items-center gap-2'>
-							{getDisplayClubName(club.name) === club.name && (
-								<img
-									src={getProxyImageUrl(club.img_url)}
-									alt={club.name}
-									className='w-10 object-contain rounded-full'
-									loading='eager'
-									onError={e => {
-										// Если логотип не загрузился, скрываем изображение
-										const target = e.target as HTMLImageElement
-										target.style.display = 'none'
-									}}
-								/>
-							)}
+							{selectedClub &&
+								getDisplayClubName(selectedClub.name) === selectedClub.name && (
+									<img
+										src={getProxyImageUrl(selectedClub.img_url)}
+										alt={selectedClub.name}
+										className='w-10 object-contain rounded-full'
+										loading='eager'
+										onError={e => {
+											// Если логотип не загрузился, скрываем изображение
+											const target = e.target as HTMLImageElement
+											target.style.display = 'none'
+										}}
+									/>
+								)}
 							<span className='text-[clamp(1.5rem,2.5vw,3rem)] font-bold text-center'>
-								{getDisplayClubName(club.name)}
+								{selectedClub
+									? getDisplayClubName(selectedClub.name)
+									: 'Загрузка...'}
 							</span>
 						</div>
 					</div>
@@ -659,9 +657,9 @@ const Results = () => {
 								</button>
 
 								{/* Кнопка для просмотра рейтинга */}
-								{club && (
+								{selectedClub && (
 									<Link
-										to={`/admin/ratings/${club.id}`}
+										to={`/admin/ratings/${selectedClub.id}`}
 										state={{ source: 'results' }}
 										className={`inline-block bg-[#FFEC13] text-black font-bold py-3 px-8 rounded-lg text-lg w-fit ${
 											isSharing
@@ -673,16 +671,17 @@ const Results = () => {
 									</Link>
 								)}
 
-								<Link
-									to='/select-team'
-									className={`inline-block bg-[#FFEC13] text-black font-bold py-3 px-8 rounded-lg text-lg w-fit ${
+								<button
+									onClick={handleStartNewGame}
+									className={`bg-[#FFEC13] text-black font-bold py-3 px-8 rounded-lg text-lg w-fit ${
 										isSharing
 											? 'opacity-50 cursor-not-allowed pointer-events-none'
 											: ''
 									}`}
+									disabled={isSharing}
 								>
 									Собрать новый тир-лист
-								</Link>
+								</button>
 
 								{/* Статус шэринга */}
 								{shareStatus && (
@@ -720,7 +719,7 @@ const Results = () => {
 			</div>
 
 			{/* Компонент для тестирования шэринга в development режиме */}
-			{import.meta.env.DEV && isAdmin && hasGameData && club && (
+			{import.meta.env.DEV && isAdmin && hasGameData && selectedClub && (
 				<ShareTestPanel
 					onTestShare={getTestShareOptions}
 					initData={initData || ''}

@@ -2,7 +2,7 @@ import { create } from 'zustand'
 import { devtools, persist } from 'zustand/middleware'
 import { fetchPlayersByClub } from '../api'
 import { getCategories } from '../config/categories'
-import type { CategorizedPlayers, Category, Player } from '../types'
+import type { CategorizedPlayers, Category, Club, Player } from '../types'
 
 type AddPlayerResult =
 	| 'success'
@@ -41,6 +41,7 @@ interface GameState {
 	playerQueue: Player[]
 	processedPlayersCount: number
 	categories: Category[]
+	selectedClub: Club | null
 	isLoading: boolean
 	error: string | null
 	maxPlayersToProcess: number
@@ -70,7 +71,7 @@ interface GameState {
 	getCategoryFilled: (categoryName: string) => string
 	getCurrentPlayer: () => Player | undefined
 	resetGame: () => void
-	initializeGame: (initData: string, clubId: string) => Promise<void>
+	initializeGame: (initData: string, club: Club) => Promise<void>
 	goBackToPreviousPlayer: () => boolean // Возврат на один шаг
 
 	// Методы для редактирования позиций
@@ -91,6 +92,7 @@ const initialState = {
 	processedPlayersCount: 0,
 	progressPercentage: 0,
 	categories: [],
+	selectedClub: null,
 	isLoading: false,
 	error: null,
 	maxPlayersToProcess: 0,
@@ -264,15 +266,16 @@ export const useGameStore = create<GameState>()(
 						gameHistory: [],
 						canGoBack: false,
 						playerCount: state.playerCount, // Сохраняем количество игроков
+						selectedClub: null, // Очищаем выбранный клуб
 					})
 				},
 
-				initializeGame: async (initData: string, clubId: string) => {
+				initializeGame: async (initData: string, club: Club) => {
 					set({ isLoading: true, error: null })
 
 					try {
 						// Загружаем игроков с сервера
-						const players = await fetchPlayersByClub(initData, clubId)
+						const players = await fetchPlayersByClub(initData, club.id)
 
 						// Определяем категории в зависимости от количества игроков
 						const categoriesForGame = getCategories(players.length)
@@ -295,6 +298,7 @@ export const useGameStore = create<GameState>()(
 							canGoBack: false,
 							hasCompletedInitialStep: false,
 							playerCount: players.length, // Сохраняем количество игроков
+							selectedClub: club, // Сохраняем выбранный клуб
 						})
 					} catch (error) {
 						console.error('Ошибка при инициализации игры:', error)
@@ -502,6 +506,7 @@ export const useGameStore = create<GameState>()(
 					tempCategorizedPlayers: state.tempCategorizedPlayers,
 					hasCompletedInitialStep: state.hasCompletedInitialStep,
 					playerCount: state.playerCount, // Добавляем playerCount для сохранения
+					selectedClub: state.selectedClub, // Добавляем selectedClub для сохранения
 				}),
 			}
 		),
