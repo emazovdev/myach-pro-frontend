@@ -514,7 +514,7 @@ const Results = () => {
 									<img
 										src={getProxyImageUrl(selectedClub.img_url)}
 										alt={selectedClub.name}
-										className='w-10 object-contain rounded-full'
+										className='w-10 object-contain rounded-full bg-white'
 										loading='eager'
 										onError={e => {
 											// Если логотип не загрузился, скрываем изображение
